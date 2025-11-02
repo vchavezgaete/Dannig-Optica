@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # Frontend React
+  frontend:
+    build: .
+    container_name: dannig-frontend
+    environment:
+      - VITE_API_URL=http://localhost:3001
+    ports:
+      - "5173:80"
+    networks:
+      - dannig-network
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+  # Backend API (para desarrollo local)
+  backend:
+    image: dannig-backend:latest
+    container_name: dannig-backend-dev
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DATABASE_URL=mysql://dannig:dannig@mysql:3306/dannig
+      - JWT_SECRET=your_jwt_secret_here_change_in_production
+    ports:
+      - "3001:3001"
+    networks:
+      - dannig-network
+    restart: unless-stopped
+    depends_on:
+      - mysql
+
+  # Base de datos MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: dannig-mysql-frontend
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: dannig
+      MYSQL_USER: dannig
+      MYSQL_PASSWORD: dannig
+    command: --default-authentication-plugin=mysql_native_password --sql-mode=""
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - dannig-network
+    restart: unless-stopped
+
+  # Adminer para gestión de BD
+  adminer:
+    image: adminer
+    container_name: dannig-adminer-frontend
+    ports:
+      - "8080:8080"
+    networks:
+      - dannig-network
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  dannig-network:
+    driver: bridge

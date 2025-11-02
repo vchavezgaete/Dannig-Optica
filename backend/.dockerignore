@@ -1,0 +1,47 @@
+# Railway-specific .dockerignore
+# Ignore files that might cause build context issues
+
+# Development files
+*.log
+logs/
+.DS_Store
+.vscode/
+.idea/
+
+# Build artifacts
+dist/
+coverage/
+.nyc_output/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Documentation
+README.md
+*.md
+
+# Build scripts (not needed in production)
+build-*.ps1
+build-*.sh
+build-with-verification.sh
+
+# Test and development scripts
+scripts/generate-test-clients.ts
+scripts/ping.ts
+scripts/seed-demo-data.ts
+scripts/deployment-diagnostic.sh
+scripts/extract-database-url.sh
+scripts/fix-database-url.sh
+scripts/migrate-to-postgres.sh
+
+# Git files
+.git/
+.gitignore
+
+# Node modules (will be installed fresh)
+node_modules/
+npm-debug.log

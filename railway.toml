@@ -1,0 +1,14 @@
+# Railway configuration for Dannig Óptica Backend
+[build]
+builder = "dockerfile"
+dockerfilePath = "backend/Dockerfile.railway-optimized"
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+
+[env]
+NODE_ENV = "production"
+PORT = "3001"

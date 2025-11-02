@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # Base de datos MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: dannig-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: dannig
+      MYSQL_USER: dannig
+      MYSQL_PASSWORD: dannig
+    command: --default-authentication-plugin=mysql_native_password --sql-mode=""
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - dannig-network
+    restart: unless-stopped
+
+  # Adminer para gestión de BD
+  adminer:
+    image: adminer
+    container_name: dannig-adminer
+    ports:
+      - "8080:8080"
+    networks:
+      - dannig-network
+    restart: unless-stopped
+
+  # Backend API
+  backend:
+    build: .
+    container_name: dannig-backend
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DATABASE_URL=mysql://dannig:dannig@mysql:3306/dannig
+      - JWT_SECRET=your_jwt_secret_here_change_in_production
+      - ADMIN_NAME=Admin
+      - ADMIN_EMAIL=admin@dannig.local
+      - ADMIN_PASSWORD=admin123
+    ports:
+      - "3001:3001"
+    depends_on:
+      - mysql
+    networks:
+      - dannig-network
+    restart: unless-stopped
+    volumes:
+      # Montar logs si es necesario
+      - ./logs:/app/logs
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  dannig-network:
+    driver: bridge

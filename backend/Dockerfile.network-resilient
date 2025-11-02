@@ -1,0 +1,66 @@
+# Railway Network-Resilient Dockerfile for Dannig Óptica Backend
+FROM node:18-alpine
+
+# Configurar variables de entorno para estabilidad de red
+ENV NODE_ENV=production
+ENV PORT=3001
+ENV npm_config_timeout=60000
+ENV npm_config_retry=3
+ENV npm_config_fetch_retry_mintimeout=20000
+ENV npm_config_fetch_retry_maxtimeout=120000
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Instalar dependencias del sistema con reintentos
+RUN for i in 1 2 3; do \
+        apk add --no-cache openssl libc6-compat netcat-openbsd curl && break || sleep 5; \
+    done
+
+# Copiar package.json primero para mejor caché
+COPY package*.json ./
+
+# Instalar dependencias con reintentos
+RUN for i in 1 2 3; do \
+        npm install --production --no-audit --no-fund && break || sleep 10; \
+    done
+
+# Copiar archivos de configuración
+COPY tsconfig.json ./
+COPY prisma ./prisma
+
+# Generar cliente de Prisma con reintentos
+RUN for i in 1 2 3; do \
+        npx prisma generate && break || sleep 5; \
+    done
+
+# Copiar código fuente
+COPY src ./src
+
+# Compilar TypeScript
+RUN npm run build
+
+# Preparar scripts de manera robusta
+RUN mkdir -p ./scripts
+
+# Copiar scripts con verificación individual
+COPY scripts/init.sh ./scripts/init.sh
+RUN chmod +x ./scripts/init.sh && echo "✅ init.sh ready"
+
+COPY scripts/start-production.sh ./scripts/start-production.sh
+RUN chmod +x ./scripts/start-production.sh && echo "✅ start-production.sh ready"
+
+COPY scripts/validate-env.sh ./scripts/validate-env.sh
+RUN chmod +x ./scripts/validate-env.sh && echo "✅ validate-env.sh ready"
+
+# Verificación final
+RUN ls -la ./scripts/ && echo "🎯 All scripts verified"
+
+# Limpiar para reducir tamaño de imagen
+RUN rm -rf src/ tsconfig.json package*.json
+
+# Exponer puerto
+EXPOSE 3001
+
+# Comando de inicio
+CMD ["npm", "start"]

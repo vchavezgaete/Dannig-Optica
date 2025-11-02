@@ -1,0 +1,19 @@
+# Asegurar fin de línea LF para scripts
+*.sh text eol=lf
+
+# Archivos de configuración
+*.json text
+*.yml text
+*.yaml text
+*.toml text
+*.md text
+
+# Archivos de código
+*.ts text
+*.tsx text
+*.js text
+*.jsx text
+
+# Archivos de configuración Docker
+Dockerfile text
+docker-compose.yml text

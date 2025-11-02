@@ -1,0 +1,25 @@
+# Railway configuration for Dannig Óptica Backend - Network Optimized
+[build]
+builder = "dockerfile"
+dockerfilePath = "backend/Dockerfile.railway-optimized"
+buildCommand = ""
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+[env]
+NODE_ENV = "production"
+PORT = "3001"
+npm_config_timeout = "60000"
+npm_config_retry = "3"
+npm_config_fetch_retry_mintimeout = "20000"
+npm_config_fetch_retry_maxtimeout = "120000"
+
+[build.env]
+NODE_ENV = "production"
+npm_config_timeout = "60000"
+npm_config_retry = "3"

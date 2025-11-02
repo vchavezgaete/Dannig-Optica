@@ -1,0 +1,25 @@
+# Railway Configuration - DannigOptica Frontend
+# Documentación: https://docs.railway.app/deploy/config-as-code
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "frontend/Dockerfile"
+
+[deploy]
+numReplicas = 1
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+healthcheckPath = "/"
+healthcheckTimeout = 300  # 5 minutos para inicialización
+
+# Variables de entorno para Railway
+[deploy.env]
+VITE_API_URL = "https://tu-backend-url.railway.app"
+NODE_ENV = "production"
+
+# NOTA IMPORTANTE: Reemplazar "tu-backend-url" con la URL real del backend en Railway
+# 
+# PASOS PARA CONFIGURAR:
+# 1. Obtener la URL del backend desde Railway Dashboard
+# 2. Actualizar VITE_API_URL con la URL correcta
+# 3. Hacer commit y push de los cambios

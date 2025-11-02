@@ -1,0 +1,209 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Cliente {
+  idCliente     Int      @id @default(autoincrement()) @map("id_cliente")
+  rut           String   @unique(map: "uq_cliente_rut") @db.VarChar(12)
+  nombre        String   @db.VarChar(100)
+  telefono      String?  @db.VarChar(15)
+  correo        String?  @db.VarChar(120)
+  direccion     String?  @db.VarChar(150)
+  sector        String?  @db.VarChar(80)
+  fechaCreacion DateTime @default(now()) @map("fecha_creacion") @db.DateTime(0)
+  idVendedor    Int?     @map("id_vendedor")
+  vendedor      Usuario? @relation(fields: [idVendedor], references: [idUsuario], onDelete: NoAction, map: "fk_cliente_vendedor")
+  alertas       Alerta[]
+  citas         Cita[]
+  ventas        Venta[]
+
+  @@index([idVendedor], map: "fk_cliente_vendedor")
+  @@map("cliente")
+}
+
+model Operativo {
+  idOperativo Int      @id @default(autoincrement()) @map("id_operativo")
+  nombre      String   @db.VarChar(120)
+  fecha       DateTime @db.Date
+  lugar       String?  @db.VarChar(150)
+  cupos       Int?
+  citas       Cita[]
+
+  @@map("operativo")
+}
+
+model Usuario {
+  idUsuario        Int          @id @default(autoincrement()) @map("id_usuario")
+  nombre           String       @db.VarChar(100)
+  correo           String       @unique(map: "uq_usuario_correo") @db.VarChar(120)
+  hashPassword     String       @map("hash_password") @db.VarChar(255)
+  activo           Int          @default(1) @db.TinyInt
+  roles            UsuarioRol[]
+  clientesCaptados Cliente[]
+
+  @@map("usuario")
+}
+
+model Rol {
+  idRol    Int          @id @default(autoincrement()) @map("id_rol")
+  nombre   String       @unique(map: "uq_rol_nombre") @db.VarChar(50)
+  usuarios UsuarioRol[]
+
+  @@map("rol")
+}
+
+model UsuarioRol {
+  idUsuario Int     @map("id_usuario")
+  idRol     Int     @map("id_rol")
+  rol       Rol     @relation(fields: [idRol], references: [idRol], onDelete: Cascade, map: "fk_ur_rol")
+  usuario   Usuario @relation(fields: [idUsuario], references: [idUsuario], onDelete: Cascade, map: "fk_ur_usuario")
+
+  @@id([idUsuario, idRol])
+  @@index([idRol], map: "fk_ur_rol")
+  @@map("usuario_rol")
+}
+
+model Cita {
+  idCita      Int           @id @default(autoincrement()) @map("id_cita")
+  idCliente   Int           @map("id_cliente")
+  idOperativo Int?          @map("id_operativo")
+  fechaHora   DateTime      @map("fecha_hora") @db.DateTime(0)
+  estado      CitaEstado
+  cliente     Cliente       @relation(fields: [idCliente], references: [idCliente], onDelete: NoAction, map: "fk_cita_cliente")
+  operativo   Operativo?    @relation(fields: [idOperativo], references: [idOperativo], onDelete: NoAction, map: "fk_cita_operativo")
+  ficha       FichaClinica?
+
+  @@index([idCliente, fechaHora], map: "ix_cita_cliente_fecha")
+  @@index([idOperativo, fechaHora], map: "ix_cita_operativo_fecha")
+  @@map("cita")
+}
+
+model FichaClinica {
+  idFicha                    Int      @id @default(autoincrement()) @map("id_ficha")
+  idCita                     Int      @unique(map: "uq_ficha_cita") @map("id_cita")
+  antecedentesGenerales      String?  @map("antecedentes_generales") @db.Text
+  antecedentesOftalmologicos String?  @map("antecedentes_oftalmologicos") @db.Text
+  observaciones              String?  @db.Text
+  fechaRegistro              DateTime @default(now()) @map("fecha_registro") @db.DateTime(0)
+  cita                       Cita     @relation(fields: [idCita], references: [idCita], onDelete: Cascade, map: "fk_ficha_cita")
+  recetas                    Receta[]
+
+  @@map("ficha_clinica")
+}
+
+model Receta {
+  idReceta     Int          @id @default(autoincrement()) @map("id_receta")
+  idFicha      Int          @map("id_ficha")
+  odEsfera     Decimal?     @map("od_esfera") @db.Decimal(4, 2)
+  odCilindro   Decimal?     @map("od_cilindro") @db.Decimal(4, 2)
+  odEje        Int?         @map("od_eje") @db.SmallInt
+  oiEsfera     Decimal?     @map("oi_esfera") @db.Decimal(4, 2)
+  oiCilindro   Decimal?     @map("oi_cilindro") @db.Decimal(4, 2)
+  oiEje        Int?         @map("oi_eje") @db.SmallInt
+  adicion      Decimal?     @db.Decimal(3, 2)
+  pd           Decimal?     @db.Decimal(4, 2)
+  vigenciaDias Int?         @map("vigencia_dias")
+  fechaEmision DateTime     @default(dbgenerated("(curdate())")) @map("fecha_emision") @db.Date
+  ficha        FichaClinica @relation(fields: [idFicha], references: [idFicha], onDelete: Cascade, map: "fk_receta_ficha")
+  ventas       Venta[]
+
+  @@index([idFicha], map: "fk_receta_ficha")
+  @@map("receta")
+}
+
+model Producto {
+  idProducto Int         @id @default(autoincrement()) @map("id_producto")
+  codigo     String      @unique(map: "uq_producto_codigo") @db.VarChar(50)
+  nombre     String      @db.VarChar(120)
+  precio     Decimal     @db.Decimal(10, 2)
+  tipo       String?     @db.VarChar(30)
+  items      ItemVenta[]
+
+  @@map("producto")
+}
+
+model Venta {
+  idVenta        Int            @id @default(autoincrement()) @map("id_venta")
+  idCliente      Int            @map("id_cliente")
+  idReceta       Int?           @map("id_receta")
+  fechaVenta     DateTime       @default(now()) @map("fecha_venta") @db.DateTime(0)
+  total          Decimal        @db.Decimal(10, 2)
+  tipoDocumento  TipoDocumento? @map("tipo_documento")
+  items          ItemVenta[]
+  cliente        Cliente        @relation(fields: [idCliente], references: [idCliente], onDelete: NoAction, map: "fk_venta_cliente")
+  receta         Receta?        @relation(fields: [idReceta], references: [idReceta], map: "fk_venta_receta")
+
+  @@index([idCliente, fechaVenta], map: "ix_venta_cliente_fecha")
+  @@index([idReceta], map: "fk_venta_receta")
+  @@map("venta")
+}
+
+model ItemVenta {
+  idItem         Int       @id @default(autoincrement()) @map("id_item")
+  idVenta        Int       @map("id_venta")
+  idProducto     Int       @map("id_producto")
+  cantidad       Int
+  precioUnitario Decimal   @map("precio_unitario") @db.Decimal(10, 2)
+  garantia       Garantia?
+  producto       Producto  @relation(fields: [idProducto], references: [idProducto], onDelete: NoAction, map: "fk_item_producto")
+  venta          Venta     @relation(fields: [idVenta], references: [idVenta], onDelete: Cascade, map: "fk_item_venta")
+
+  @@index([idVenta], map: "ix_item_venta")
+  @@index([idProducto], map: "fk_item_producto")
+  @@map("item_venta")
+}
+
+model Garantia {
+  idGarantia  Int       @id @default(autoincrement()) @map("id_garantia")
+  idItem      Int       @unique(map: "uq_garantia_item") @map("id_item")
+  fechaInicio DateTime  @map("fecha_inicio") @db.Date
+  fechaFin    DateTime  @map("fecha_fin") @db.Date
+  condiciones String?   @db.Text
+  item        ItemVenta @relation(fields: [idItem], references: [idItem], onDelete: Cascade, map: "fk_garantia_item")
+
+  @@map("garantia")
+}
+
+model Alerta {
+  idAlerta        Int         @id @default(autoincrement()) @map("id_alerta")
+  idCliente       Int         @map("id_cliente")
+  tipo            AlertaTipo
+  canal           AlertaCanal
+  mensaje         String      @db.VarChar(240)
+  fechaProgramada DateTime    @map("fecha_programada") @db.DateTime(0)
+  enviado         Int         @default(0) @db.TinyInt
+  cliente         Cliente     @relation(fields: [idCliente], references: [idCliente], onDelete: NoAction, map: "fk_alerta_cliente")
+
+  @@index([fechaProgramada, enviado], map: "ix_alerta_programada")
+  @@index([idCliente], map: "fk_alerta_cliente")
+  @@map("alerta")
+}
+
+enum CitaEstado {
+  Programada
+  Confirmada
+  Atendida
+  NoShow     @map("No-show")
+  Cancelada
+}
+
+enum AlertaTipo {
+  Control
+  Garantia  @map("Garantía")
+  Operativo
+}
+
+enum AlertaCanal {
+  SMS
+  Correo
+}
+
+enum TipoDocumento {
+  Boleta
+  Factura
+}

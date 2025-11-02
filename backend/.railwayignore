@@ -1,0 +1,32 @@
+# Railway ignore file for Dannig Óptica Backend
+# Ignore unnecessary files during Railway deployment
+
+# Development files
+*.log
+logs/
+.DS_Store
+.vscode/
+.idea/
+
+# Build artifacts
+dist/
+coverage/
+.nyc_output/
+
+# Environment files (Railway handles these)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Documentation (optional)
+README.md
+*.md
+
+# Scripts not needed in production
+scripts/build-*.ps1
+scripts/build-*.sh
+scripts/generate-test-clients.ts
+scripts/ping.ts
+scripts/seed-demo-data.ts

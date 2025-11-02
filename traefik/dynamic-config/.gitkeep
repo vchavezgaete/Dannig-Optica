@@ -1,0 +1,3 @@
+# Este directorio contiene configuraciones dinámicas de Traefik
+# Los archivos .yml aquí se cargan automáticamente por Traefik
+
