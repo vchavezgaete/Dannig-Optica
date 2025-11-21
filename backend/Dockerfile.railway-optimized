@@ -18,6 +18,7 @@ RUN apk add --no-cache --update \
     libc6-compat \
     netcat-openbsd \
     curl \
+    bash \
     && rm -rf /var/cache/apk/*
 
 RUN mkdir -p /tmp/.npm
@@ -91,14 +92,18 @@ RUN echo "Verifying types availability..." && \
 # Compile TypeScript (src/ directory)
 RUN echo "Compiling TypeScript..." && npm run build
 
-# Make railway-init.sh executable
+# Make railway-init.sh executable and verify it exists
 RUN chmod +x ./scripts/railway-init.sh && \
+    ls -la ./scripts/railway-init.sh && \
     echo "railway-init.sh made executable"
 
 # Keep tsconfig.json and scripts for ts-node at runtime
 # Clean up source files (keep scripts for ts-node to run seed)
-RUN rm -rf src/
+RUN rm -rf src/ && \
+    echo "Verifying scripts still exist after cleanup:" && \
+    ls -la ./scripts/railway-init.sh || (echo "ERROR: railway-init.sh missing after cleanup" && exit 1)
 
 EXPOSE 3001
 
-CMD ["./scripts/railway-init.sh"]
+# Use bash explicitly to run the script
+CMD ["/bin/bash", "./scripts/railway-init.sh"]
