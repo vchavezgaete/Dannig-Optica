@@ -5,9 +5,9 @@ FROM node:18-alpine as build
 WORKDIR /app
 
 # Accept build argument for API URL
-# Default value (will be overridden by docker-compose)
-# Using standard port 443 (no port needed in URL)
-ARG VITE_API_URL=https://api.Dannig-Optica.freeddns.org
+# Default value (will be overridden by Railway environment variables)
+# Railway will pass this during build via [build.env] or [deploy.env]
+ARG VITE_API_URL=http://localhost:3001
 ENV VITE_API_URL=$VITE_API_URL
 
 # Copiar package.json y package-lock.json primero (para mejor caching)

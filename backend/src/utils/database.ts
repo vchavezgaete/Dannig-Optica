@@ -42,9 +42,9 @@ export function resolveDatabaseUrl(): string {
     }
   }
 
-  // Si es PostgreSQL, mostrar error específico
+  // Si es PostgreSQL, mostrar error específico y sugerir MySQL
   if (databaseUrl.includes('postgresql') || databaseUrl.includes('postgres')) {
-    throw new Error('Se detectó PostgreSQL, pero el proyecto requiere MySQL. En Railway Dashboard, crear una base de datos MySQL específicamente.');
+    throw new Error('Se detectó PostgreSQL, pero el proyecto requiere MySQL. Por favor, crear una base de datos MySQL en Railway Dashboard.');
   }
 
   // Si no se puede determinar, mostrar el error con información útil

@@ -1,14 +1,20 @@
 # Railway configuration for Dannig Óptica Backend
+# This file configures the backend service deployment
 [build]
 builder = "dockerfile"
 dockerfilePath = "backend/Dockerfile.railway-optimized"
 
 [deploy]
-startCommand = "npm start"
+startCommand = "./scripts/railway-init.sh"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
 
 [env]
 NODE_ENV = "production"
 PORT = "3001"
+# Set SEED_DATABASE=true on first deployment to populate initial data
+SEED_DATABASE = "false"
+# Set FORCE_SEED=true to force seed even if data exists
+FORCE_SEED = "false"

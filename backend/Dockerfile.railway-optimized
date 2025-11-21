@@ -46,12 +46,19 @@ RUN echo "Verifying dependencies..." && \
 # Copy configuration and source code
 COPY backend/tsconfig.json ./
 COPY backend/src ./src
+COPY backend/scripts ./scripts
 
-# Verify tsconfig exists
+# Verify tsconfig and scripts exist
 RUN if [ ! -f "./tsconfig.json" ]; then \
         echo "ERROR: tsconfig.json not found" && exit 1; \
     fi && \
-    echo "tsconfig.json found"
+    if [ ! -f "./scripts/railway-init.sh" ]; then \
+        echo "ERROR: railway-init.sh not found" && exit 1; \
+    fi && \
+    if [ ! -f "./scripts/seed-demo-data.ts" ]; then \
+        echo "ERROR: seed-demo-data.ts not found" && exit 1; \
+    fi && \
+    echo "tsconfig.json and scripts found"
 
 # Ensure TypeScript types are installed
 # Install with --include=dev to ensure they are not skipped
@@ -81,27 +88,16 @@ RUN echo "Verifying types availability..." && \
     fi && \
     echo "All required types are available"
 
-# Compile TypeScript
+# Compile TypeScript (src/ directory)
 RUN echo "Compiling TypeScript..." && npm run build
 
-# Copy and prepare scripts
-RUN mkdir -p ./scripts
+# Make railway-init.sh executable
+RUN chmod +x ./scripts/railway-init.sh && \
+    echo "railway-init.sh made executable"
 
-# Copy railway-init.sh explicitly (critical script)
-COPY backend/scripts/railway-init.sh ./scripts/railway-init.sh
-
-# Verify railway-init.sh exists and is executable
-RUN if [ ! -f ./scripts/railway-init.sh ]; then \
-        echo "ERROR: railway-init.sh not found" && \
-        ls -la ./scripts/ || true && \
-        ls -la backend/scripts/ || true && \
-        exit 1; \
-    fi && \
-    chmod +x ./scripts/railway-init.sh && \
-    echo "railway-init.sh found and made executable"
-
-# Clean up source files
-RUN rm -rf src/ tsconfig.json
+# Keep tsconfig.json and scripts for ts-node at runtime
+# Clean up source files (keep scripts for ts-node to run seed)
+RUN rm -rf src/
 
 EXPOSE 3001
 

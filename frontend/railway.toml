@@ -5,6 +5,15 @@
 builder = "DOCKERFILE"
 dockerfilePath = "frontend/Dockerfile"
 
+# Variables de entorno para BUILD (necesarias durante el build)
+# Vite necesita estas variables durante el build, no en runtime
+[build.env]
+# VITE_API_URL debe ser proporcionada como variable de entorno en Railway Dashboard
+# O actualizada aquí con la URL real del backend después del primer despliegue
+# Formato: https://tu-backend.railway.app o https://backend-production.up.railway.app
+VITE_API_URL = "https://tu-backend-url.railway.app"
+NODE_ENV = "production"
+
 [deploy]
 numReplicas = 1
 restartPolicyType = "ON_FAILURE"
@@ -12,14 +21,15 @@ restartPolicyMaxRetries = 10
 healthcheckPath = "/"
 healthcheckTimeout = 300  # 5 minutos para inicialización
 
-# Variables de entorno para Railway
-[deploy.env]
-VITE_API_URL = "https://tu-backend-url.railway.app"
-NODE_ENV = "production"
-
-# NOTA IMPORTANTE: Reemplazar "tu-backend-url" con la URL real del backend en Railway
+# NOTA IMPORTANTE SOBRE VITE_API_URL:
 # 
+# En Vite, las variables de entorno deben estar disponibles durante el BUILD, no en runtime.
+# Por lo tanto, VITE_API_URL debe configurarse en Railway Dashboard como variable de entorno
+# del servicio de frontend ANTES del primer despliegue, o actualizada aquí.
+#
 # PASOS PARA CONFIGURAR:
-# 1. Obtener la URL del backend desde Railway Dashboard
-# 2. Actualizar VITE_API_URL con la URL correcta
-# 3. Hacer commit y push de los cambios
+# 1. Desplegar el backend primero y obtener su URL pública de Railway
+# 2. En Railway Dashboard, ir al servicio de frontend > Variables
+# 3. Agregar variable: VITE_API_URL = https://tu-backend-url.railway.app
+# 4. Alternativamente, actualizar el valor arriba en [build.env] y hacer commit
+# 5. Hacer redeploy del frontend para que se recompile con la nueva URL
