@@ -11,8 +11,8 @@
 
 [build]
 builder = "DOCKERFILE"
-# Railway construye desde la raíz del repo, por lo que necesitamos la ruta completa
-dockerfilePath = "frontend/Dockerfile"
+# Si Root Directory está configurado como "frontend", la ruta es relativa a ese directorio
+dockerfilePath = "Dockerfile"
 
 # Variables de entorno para BUILD (necesarias durante el build)
 # Vite necesita estas variables durante el build, no en runtime

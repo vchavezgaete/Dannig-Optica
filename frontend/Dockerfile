@@ -1,5 +1,5 @@
 # Frontend Dockerfile para Dannig Óptica
-# Railway construye desde la raíz del repo, por lo que las rutas deben ser relativas a frontend/
+# Railway construye desde el Root Directory (frontend/), por lo que las rutas son relativas a ese directorio
 FROM node:18-alpine as build
 
 # Establecer directorio de trabajo
@@ -11,17 +11,17 @@ ARG VITE_API_URL=http://localhost:3001
 ENV VITE_API_URL=$VITE_API_URL
 
 # Copiar package.json y package-lock.json primero (para mejor caching)
-# Railway construye desde raíz, así que necesitamos frontend/package*.json
-COPY frontend/package*.json ./
+# Como el contexto es frontend/, las rutas son relativas a ese directorio
+COPY package*.json ./
 
 # Instalar dependencias
 RUN npm install
 
-# Copiar código fuente del frontend
-COPY frontend/ .
+# Copiar código fuente del frontend (contexto es frontend/, así que solo copiamos .)
+COPY . .
 
-# Copiar nginx.conf también en la etapa de build para tenerlo disponible después
-COPY frontend/nginx.conf /tmp/nginx.conf
+# Copiar nginx.conf en la etapa de build para tenerlo disponible después
+COPY nginx.conf /tmp/nginx.conf
 
 # Construir la aplicación con variables de entorno
 RUN npm run build
