@@ -11,7 +11,8 @@
 
 [build]
 builder = "DOCKERFILE"
-# Si el Dockerfile está en la raíz, el dockerfilePath apunta a la raíz
+# Si Root Directory está configurado como "frontend", el dockerfilePath es relativo a ese directorio
+# Como el Dockerfile está en frontend/, la ruta es simplemente "Dockerfile"
 dockerfilePath = "Dockerfile"
 
 # Variables de entorno para BUILD (necesarias durante el build)
