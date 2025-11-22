@@ -1,10 +1,10 @@
 # Railway Configuration - DannigOptica Frontend
 # Documentación: https://docs.railway.app/deploy/config-as-code
 #
-# IMPORTANTE: Si el Dockerfile está en la raíz del repo:
-# 1. El Root Directory en Railway Dashboard debe estar vacío (raíz)
-# 2. El dockerfilePath apunta al Dockerfile en la raíz
-# 3. Las rutas en el Dockerfile incluyen el prefijo frontend/
+# IMPORTANTE: El Dockerfile está en frontend/
+# 1. El Root Directory en Railway Dashboard debe estar configurado como "frontend"
+# 2. El dockerfilePath es "Dockerfile" (relativo a frontend/)
+# 3. Las rutas en el Dockerfile NO incluyen el prefijo frontend/ (ya estamos en frontend/)
 #
 # Este archivo configura únicamente el servicio FRONTEND.
 # Para el backend, ver railway.toml en la raíz del proyecto.
@@ -46,7 +46,7 @@ healthcheckTimeout = 120  # 2 minutos para dar tiempo a que nginx inicie complet
 # 5. Hacer redeploy del frontend para que se recompile con la nueva URL
 #
 # CONFIGURACIÓN EN RAILWAY DASHBOARD:
-# - Root Directory: (vacío/raíz)
-# - Dockerfile Path: Dockerfile (o dejar en auto-detect)
+# - Root Directory: frontend
+# - Dockerfile Path: Dockerfile (relativo a frontend/)
 # - Healthcheck Path: /health
 # - Healthcheck Timeout: 120 segundos
