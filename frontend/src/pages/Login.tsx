@@ -25,8 +25,8 @@ export default function Login() {
   if (!auth) throw new Error("AuthContext no disponible");
   const { setToken, login } = auth as AuthContextType;
 
-  const [email, setEmail] = useState("admin@dannig.local");
-  const [password, setPass] = useState("admin123");
+  const [email, setEmail] = useState("Ingrese su usuario");
+  const [password, setPass] = useState("Ingrese su clave");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
