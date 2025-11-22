@@ -38,9 +38,42 @@ export default fp(async (app) => {
   });
 
   // Crea un preHandler que exige uno de los roles indicados
-  app.decorate("authorize", (roles: string[]) => {
+  app.decorate("authorize", (requiredRoles: string[]) => {
     return async (req: any, reply: any) => {
-      if (!req.user?.roles?.some((r: string) => roles.includes(r))) {
+      const userRoles = req.user?.roles || [];
+      
+      // Verificar si algún rol del usuario coincide con alguno de los roles requeridos
+      // usando normalización para evitar problemas de mayúsculas/tildes/alias
+      const hasPermission = userRoles.some((userRole: string) => {
+        const current = String(userRole).toLowerCase().trim();
+        
+        return requiredRoles.some(required => {
+            const target = String(required).toLowerCase().trim();
+            
+            // Coincidencia directa
+            if (current === target) return true;
+            
+            // Mapeos de compatibilidad (Backend DB vs Route Requirements)
+            // DB: Administrador -> Route: admin
+            if (target === 'admin' && current === 'administrador') return true;
+            if (target === 'administrador' && current === 'admin') return true;
+            
+            // DB: Oftalmólogo -> Route: oftalmologo
+            if (target === 'oftalmologo' && (current === 'oftalmólogo' || current === 'oftalmologo')) return true;
+            if (target === 'oftalmólogo' && (current === 'oftalmologo' || current === 'oftalmólogo')) return true;
+            
+            // DB: Captador -> Route: captador (simple lowercase match handles this, but being explicit doesn't hurt)
+            
+            return false;
+        });
+      });
+
+      if (!hasPermission) {
+        req.log.warn({ 
+          userRoles, 
+          requiredRoles, 
+          userId: req.user?.sub 
+        }, 'Authorization failed: User does not have required roles');
         return reply.code(403).send({ error: "No autorizado" });
       }
     };
