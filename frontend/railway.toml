@@ -1,22 +1,21 @@
 # Railway Configuration - DannigOptica Frontend
 # Documentación: https://docs.railway.app/deploy/config-as-code
 #
-# IMPORTANTE: Este archivo será usado automáticamente cuando:
-# 1. Creas un servicio "Frontend" en Railway Dashboard
-# 2. Configuras el Root Directory como "frontend"
-# 3. Railway detectará este railway.toml en frontend/
+# IMPORTANTE: Si el Dockerfile está en la raíz del repo:
+# 1. El Root Directory en Railway Dashboard debe estar vacío (raíz)
+# 2. El dockerfilePath apunta al Dockerfile en la raíz
+# 3. Las rutas en el Dockerfile incluyen el prefijo frontend/
 #
 # Este archivo configura únicamente el servicio FRONTEND.
 # Para el backend, ver railway.toml en la raíz del proyecto.
 
 [build]
 builder = "DOCKERFILE"
-# Si Root Directory está configurado como "frontend", el dockerfilePath es relativo a ese directorio
-# Como el Dockerfile está en frontend/, la ruta es simplemente "Dockerfile"
+# Si el Dockerfile está en la raíz, el dockerfilePath apunta a la raíz
 dockerfilePath = "Dockerfile"
 
 # Variables de entorno para BUILD (necesarias durante el build)
-# Vite necesita estas variables durante el build, no en runtime
+# Vite necesita estas variables durante el BUILD, no en runtime
 [build.env]
 # VITE_API_URL debe ser proporcionada como variable de entorno en Railway Dashboard
 # O actualizada aquí con la URL real del backend después del primer despliegue
@@ -26,13 +25,11 @@ NODE_ENV = "production"
 
 [deploy]
 # No especificar startCommand - dejar que Railway use el CMD del Dockerfile
-# El Dockerfile ya tiene: CMD ["nginx", "-g", "daemon off;"]
-# Si Railway requiere un comando explícito, usar la ruta completa de nginx
 numReplicas = 1
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 healthcheckPath = "/health"  # Endpoint específico para healthcheck
-healthcheckTimeout = 60  # 1 minuto es suficiente si nginx inicia correctamente
+healthcheckTimeout = 120  # 2 minutos para dar tiempo a que nginx inicie completamente
 
 # NOTA IMPORTANTE SOBRE VITE_API_URL: 
 # 
@@ -46,3 +43,9 @@ healthcheckTimeout = 60  # 1 minuto es suficiente si nginx inicia correctamente
 # 3. Agregar variable: VITE_API_URL = https://tu-backend-url.railway.app
 # 4. Alternativamente, actualizar el valor arriba en [build.env] y hacer commit
 # 5. Hacer redeploy del frontend para que se recompile con la nueva URL
+#
+# CONFIGURACIÓN EN RAILWAY DASHBOARD:
+# - Root Directory: (vacío/raíz)
+# - Dockerfile Path: Dockerfile (o dejar en auto-detect)
+# - Healthcheck Path: /health
+# - Healthcheck Timeout: 120 segundos
