@@ -20,6 +20,9 @@ RUN npm install
 # Copiar código fuente del frontend
 COPY frontend/ .
 
+# Copiar nginx.conf también en la etapa de build para tenerlo disponible después
+COPY frontend/nginx.conf /tmp/nginx.conf
+
 # Construir la aplicación con variables de entorno
 RUN npm run build
 
@@ -29,8 +32,8 @@ FROM nginx:alpine
 # Copiar archivos construidos
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copiar configuración personalizada de nginx
-COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+# Copiar configuración personalizada de nginx desde la etapa de build
+COPY --from=build /tmp/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Exponer puerto 80
 EXPOSE 80
