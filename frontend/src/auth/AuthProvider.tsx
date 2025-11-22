@@ -57,7 +57,25 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = ({ token: t }: { token: string }) => setToken(t);
   const logout = () => setToken(null);
-  const hasRole = (role: string) => roles.includes(role);
+  const hasRole = (role: string) => {
+    if (!roles || roles.length === 0) return false;
+    
+    // Normalizar rol buscado (el que pide el componente)
+    const target = role.toLowerCase().trim();
+    
+    return roles.some(r => {
+      const current = r.toLowerCase().trim();
+      
+      // Coincidencia directa
+      if (current === target) return true;
+      
+      // Mapeos específicos para compatibilidad Backend-Frontend
+      if (target === 'admin' && current === 'administrador') return true;
+      if (target === 'oftalmologo' && (current === 'oftalmólogo' || current === 'oftalmologo')) return true;
+      
+      return false;
+    });
+  };
 
   const value: AuthContextType = { 
     token, 
