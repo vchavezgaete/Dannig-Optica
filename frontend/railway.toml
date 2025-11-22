@@ -12,7 +12,7 @@
 [build]
 builder = "DOCKERFILE"
 # Si Root Directory está configurado como "frontend", la ruta es relativa a ese directorio
-dockerfilePath = "Dockerfile"
+dockerfilePath = "frontend/Dockerfile"
 
 # Variables de entorno para BUILD (necesarias durante el build)
 # Vite necesita estas variables durante el build, no en runtime
