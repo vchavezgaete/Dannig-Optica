@@ -45,6 +45,7 @@ model Usuario {
   activo           Int          @default(1) @db.TinyInt
   roles            UsuarioRol[]
   clientesCaptados Cliente[]
+  auditorias       Auditoria[]
 
   @@map("usuario")
 }
@@ -206,4 +207,34 @@ enum AlertaCanal {
 enum TipoDocumento {
   Boleta
   Factura
+}
+
+model Auditoria {
+  idAuditoria    Int       @id @default(autoincrement()) @map("id_auditoria")
+  idUsuario      Int?      @map("id_usuario")
+  tabla          String    @db.VarChar(50)
+  operacion      String    @db.VarChar(20) // CREATE, UPDATE, DELETE
+  registroId     String?   @map("registro_id") @db.VarChar(50)
+  datosAnteriores String?  @map("datos_anteriores") @db.Text
+  datosNuevos    String?   @map("datos_nuevos") @db.Text
+  ipAddress      String?   @map("ip_address") @db.VarChar(45)
+  userAgent      String?   @map("user_agent") @db.VarChar(255)
+  fechaHora      DateTime  @default(now()) @map("fecha_hora") @db.DateTime(0)
+  usuario        Usuario?  @relation(fields: [idUsuario], references: [idUsuario], onDelete: SetNull, map: "fk_auditoria_usuario")
+
+  @@index([idUsuario], map: "fk_auditoria_usuario")
+  @@index([tabla, operacion], map: "ix_auditoria_tabla_operacion")
+  @@index([fechaHora], map: "ix_auditoria_fecha")
+  @@map("auditoria")
+}
+
+model Configuracion {
+  idConfiguracion Int       @id @default(autoincrement()) @map("id_configuracion")
+  clave            String    @unique(map: "uq_configuracion_clave") @db.VarChar(100)
+  valor            String    @db.Text
+  descripcion      String?   @db.VarChar(255)
+  tipo             String    @default("string") @db.VarChar(20) // string, number, boolean, json
+  fechaModificacion DateTime @default(now()) @updatedAt @map("fecha_modificacion") @db.DateTime(0)
+
+  @@map("configuracion")
 }

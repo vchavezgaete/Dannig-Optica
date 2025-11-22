@@ -16,7 +16,9 @@
     "generate:clients": "ts-node scripts/generate-test-clients.ts",
     "generate:sales": "ts-node scripts/generate-sales-data.ts",
     "generate:products": "ts-node scripts/generate-products.ts",
-    "generate:dummy": "ts-node scripts/generate-dummy-data.ts"
+    "generate:dummy": "ts-node scripts/generate-dummy-data.ts",
+    "migrate:railway": "ts-node --transpile-only scripts/migrate-to-railway.ts",
+    "migrate:railway": "ts-node --transpile-only scripts/migrate-to-railway.ts"
   },
   "dependencies": {
     "@fastify/cors": "^8.5.0",

@@ -135,6 +135,10 @@ export default function Layout() {
                 <span style={{ fontSize: "1.5rem", lineHeight: "1.2", display: "block" }}>🔔</span>
                 <span style={{ fontSize: "0.8125rem", fontWeight: "600", lineHeight: "1.2" }}>Alertas</span>
               </NavLink>
+              <NavLink to="/operativos" className="nav__link">
+                <span style={{ fontSize: "1.5rem", lineHeight: "1.2", display: "block" }}>🏥</span>
+                <span style={{ fontSize: "0.8125rem", fontWeight: "600", lineHeight: "1.2" }}>Operativos</span>
+              </NavLink>
             </>
           )}
         </div>

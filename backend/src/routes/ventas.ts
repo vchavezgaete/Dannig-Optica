@@ -11,6 +11,7 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { prisma } from "../db";
+import { registrarAuditoriaDesdeRequest } from "../utils/auditoria";
 
 // Esquema de validación para un item de venta
 const itemVentaSchema = z.object({
@@ -158,6 +159,16 @@ export async function ventaRoutes(app: FastifyInstance) {
             }
           }
         }
+      });
+
+      // Log audit
+      registrarAuditoriaDesdeRequest(req, {
+        tabla: "venta",
+        operacion: "CREATE",
+        registroId: ventaCompleta.idVenta,
+        datosNuevos: ventaCompleta,
+      }).catch((err) => {
+        req.log.warn({ error: err }, "Failed to log audit for venta creation");
       });
 
       return reply.code(201).send(ventaCompleta);

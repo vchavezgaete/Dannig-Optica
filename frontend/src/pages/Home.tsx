@@ -1,6 +1,18 @@
 import { useEffect, useState, useContext } from "react";
 import { api } from "../api";
 import { AuthContext } from "../auth/AuthContext";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+} from "recharts";
 
 type Producto = { 
   idProducto: number; 
@@ -10,11 +22,33 @@ type Producto = {
   tipo: string | null; 
 };
 
+type DashboardMetrics = {
+  kpis: {
+    totalClientes: number;
+    clientesNuevosMes: number;
+    totalCitas: number;
+    citasMes: number;
+    tasaNoShow: number;
+    totalVentas: number;
+    ventasMes: number;
+    ingresosMes: number;
+    ingresosTotales: number;
+    tasaConversion: number;
+    alertasPendientes: number;
+  };
+  citasPorEstado: Array<{ estado: string; cantidad: number }>;
+  topVendedores: Array<{ idUsuario: number; nombre: string; clientesCaptados: number }>;
+  ventasRecientes: Array<{ idVenta: number; fechaVenta: string; total: number; cliente: { nombre: string; rut: string } }>;
+  ventasPorMes: Array<{ mes: string; total: number; cantidad: number }>;
+};
+
 export default function Home() {
   const auth = useContext(AuthContext);
   const [data, setData] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardMetrics | null>(null);
+  const [loadingDashboard, setLoadingDashboard] = useState(false);
 
   // Determine user roles
   // Admin puede ver todo, así que verificamos roles sin excluir admin
@@ -22,20 +56,214 @@ export default function Home() {
   const isOftalmologo = auth?.hasRole('oftalmologo');
   const isAdmin = auth?.hasRole('admin');
 
+  // Load products (for non-admin users or as fallback)
   useEffect(() => {
-    (async () => {
-      try { 
-        const res = await api.get<Producto[]>("/productos"); 
-        setData(res.data); 
-      }
-      catch { 
-        setErr("No se pudo cargar productos"); 
-      }
-      finally { 
-        setLoading(false); 
-      }
-    })();
-  }, []);
+    if (!isAdmin) {
+      (async () => {
+        try { 
+          const res = await api.get<Producto[]>("/productos"); 
+          setData(res.data); 
+        }
+        catch { 
+          setErr("No se pudo cargar productos"); 
+        }
+        finally { 
+          setLoading(false); 
+        }
+      })();
+    } else {
+      setLoading(false);
+    }
+  }, [isAdmin]);
+
+  // Load dashboard metrics (for admin only)
+  useEffect(() => {
+    if (isAdmin) {
+      (async () => {
+        setLoadingDashboard(true);
+        try {
+          const res = await api.get<DashboardMetrics>("/dashboard/metrics");
+          setDashboardData(res.data);
+        } catch (error: any) {
+          console.error("Error loading dashboard:", error);
+          setErr("No se pudo cargar métricas del dashboard");
+        } finally {
+          setLoadingDashboard(false);
+        }
+      })();
+    }
+  }, [isAdmin]);
+
+  // Dashboard para admin
+  if (isAdmin && dashboardData) {
+    return (
+      <div className="grid">
+        <div className="section">
+          <div className="section__header">
+            <h1 className="section__title">Dashboard - Dannig Óptica</h1>
+            <p className="section__subtitle">
+              Métricas y estadísticas del sistema
+            </p>
+          </div>
+
+          {/* KPIs Grid */}
+          <div className="grid grid--4" style={{ marginBottom: "2rem" }}>
+            <div className="card">
+              <h3 style={{ margin: "0 0 0.5rem", color: "var(--verde)", fontSize: "0.9rem" }}>Total Clientes</h3>
+              <p style={{ margin: 0, fontSize: "2rem", fontWeight: "bold", color: "var(--verde)" }}>
+                {dashboardData.kpis.totalClientes}
+              </p>
+              <p style={{ margin: "0.5rem 0 0", fontSize: "0.8rem", color: "var(--texto-sec)" }}>
+                Nuevos este mes: {dashboardData.kpis.clientesNuevosMes}
+              </p>
+            </div>
+
+            <div className="card">
+              <h3 style={{ margin: "0 0 0.5rem", color: "var(--azul)", fontSize: "0.9rem" }}>Citas del Mes</h3>
+              <p style={{ margin: 0, fontSize: "2rem", fontWeight: "bold", color: "var(--azul)" }}>
+                {dashboardData.kpis.citasMes}
+              </p>
+              <p style={{ margin: "0.5rem 0 0", fontSize: "0.8rem", color: "var(--texto-sec)" }}>
+                Total: {dashboardData.kpis.totalCitas} | No-show: {dashboardData.kpis.tasaNoShow.toFixed(1)}%
+              </p>
+            </div>
+
+            <div className="card">
+              <h3 style={{ margin: "0 0 0.5rem", color: "var(--naranja)", fontSize: "0.9rem" }}>Ingresos del Mes</h3>
+              <p style={{ margin: 0, fontSize: "2rem", fontWeight: "bold", color: "var(--naranja)" }}>
+                ${dashboardData.kpis.ingresosMes.toLocaleString("es-CL")}
+              </p>
+              <p style={{ margin: "0.5rem 0 0", fontSize: "0.8rem", color: "var(--texto-sec)" }}>
+                Ventas: {dashboardData.kpis.ventasMes}
+              </p>
+            </div>
+
+            <div className="card">
+              <h3 style={{ margin: "0 0 0.5rem", color: "var(--morado)", fontSize: "0.9rem" }}>Tasa de Conversión</h3>
+              <p style={{ margin: 0, fontSize: "2rem", fontWeight: "bold", color: "var(--morado)" }}>
+                {dashboardData.kpis.tasaConversion.toFixed(1)}%
+              </p>
+              <p style={{ margin: "0.5rem 0 0", fontSize: "0.8rem", color: "var(--texto-sec)" }}>
+                Clientes → Ventas
+              </p>
+            </div>
+          </div>
+
+          {/* Charts Grid */}
+          <div className="grid grid--2" style={{ marginBottom: "2rem" }}>
+            {/* Sales by Month Chart */}
+            <div className="card">
+              <h3 style={{ margin: "0 0 1rem", color: "var(--verde)" }}>Ventas por Mes (Últimos 6 meses)</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={dashboardData.ventasPorMes}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="mes" angle={-45} textAnchor="end" height={80} />
+                  <YAxis />
+                  <Tooltip formatter={(value: number) => `$${Number(value).toLocaleString("es-CL")}`} />
+                  <Legend />
+                  <Bar dataKey="total" fill="#10b981" name="Ingresos ($)" />
+                  <Bar dataKey="cantidad" fill="#3b82f6" name="Cantidad Ventas" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Appointments by Status Chart */}
+            <div className="card">
+              <h3 style={{ margin: "0 0 1rem", color: "var(--azul)" }}>Citas por Estado</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={dashboardData.citasPorEstado}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="estado" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="cantidad" fill="#3b82f6" name="Cantidad" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Tables Grid */}
+          <div className="grid grid--2" style={{ marginBottom: "2rem" }}>
+            {/* Top Vendors */}
+            <div className="card">
+              <h3 style={{ margin: "0 0 1rem", color: "var(--verde)" }}>Top Vendedores del Mes</h3>
+              {dashboardData.topVendedores.length > 0 ? (
+                <div className="table-container">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Vendedor</th>
+                        <th>Clientes Captados</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dashboardData.topVendedores.map((v) => (
+                        <tr key={v.idUsuario}>
+                          <td>{v.nombre}</td>
+                          <td style={{ textAlign: "center", fontWeight: "600" }}>{v.clientesCaptados}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p style={{ color: "var(--texto-sec)" }}>No hay datos disponibles</p>
+              )}
+            </div>
+
+            {/* Recent Sales */}
+            <div className="card">
+              <h3 style={{ margin: "0 0 1rem", color: "var(--verde)" }}>Ventas Recientes</h3>
+              {dashboardData.ventasRecientes.length > 0 ? (
+                <div className="table-container">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Cliente</th>
+                        <th>Fecha</th>
+                        <th>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dashboardData.ventasRecientes.map((v) => (
+                        <tr key={v.idVenta}>
+                          <td>{v.cliente.nombre}</td>
+                          <td>{new Date(v.fechaVenta).toLocaleDateString("es-CL")}</td>
+                          <td style={{ fontWeight: "600", color: "var(--verde)" }}>
+                            ${v.total.toLocaleString("es-CL")}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p style={{ color: "var(--texto-sec)" }}>No hay ventas recientes</p>
+              )}
+            </div>
+          </div>
+
+          {/* Alerts Pending */}
+          {dashboardData.kpis.alertasPendientes > 0 && (
+            <div className="alert alert--warning">
+              <strong>Alertas Pendientes:</strong> {dashboardData.kpis.alertasPendientes} alertas esperando envío
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state for dashboard
+  if (isAdmin && loadingDashboard) {
+    return (
+      <div className="loading">
+        <div className="loading__spinner"></div>
+        Cargando dashboard...
+      </div>
+    );
+  }
 
   // Si es captador (y NO es admin), mostrar mensaje de acceso restringido
   // Admin puede ver todo, incluyendo el módulo de inicio

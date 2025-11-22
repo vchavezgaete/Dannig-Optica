@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api } from "../api";
 import HorasAgendadasTable from "../components/HorasAgendadasTable";
+import { exportarReportePDF, exportarReporteExcel } from "../utils/exportarReportes";
 import {
   BarChart,
   Bar,
@@ -231,13 +232,31 @@ export default function Reportes() {
       {/* Resultados */}
       {reporteData && (
         <div className="section">
-          <div className="section__header">
-            <h2 className="section__title">📈 Resultados</h2>
-            <p className="section__subtitle">
-              {reporteData.fechaDesde || reporteData.fechaHasta
-                ? `Período: ${reporteData.fechaDesde || "Inicio"} - ${reporteData.fechaHasta || "Hoy"}`
-                : "Datos históricos completos"}
-            </p>
+          <div className="section__header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+            <div>
+              <h2 className="section__title">📈 Resultados</h2>
+              <p className="section__subtitle">
+                {reporteData.fechaDesde || reporteData.fechaHasta
+                  ? `Período: ${reporteData.fechaDesde || "Inicio"} - ${reporteData.fechaHasta || "Hoy"}`
+                  : "Datos históricos completos"}
+              </p>
+            </div>
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              <button
+                onClick={() => exportarReportePDF(reporteData)}
+                className="btn btn--secondary"
+                style={{ whiteSpace: "nowrap" }}
+              >
+                📄 Exportar PDF
+              </button>
+              <button
+                onClick={() => exportarReporteExcel(reporteData)}
+                className="btn btn--secondary"
+                style={{ whiteSpace: "nowrap" }}
+              >
+                📊 Exportar Excel
+              </button>
+            </div>
           </div>
           {renderReporte()}
         </div>

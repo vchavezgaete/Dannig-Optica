@@ -7,7 +7,90 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("[INFO] Starting database seeding...");
 
-  // Create demo users (vendors)
+  // 1. Create Roles
+  const roles = ["Administrador", "Vendedor", "Captador", "Oftalmólogo", "Gerente"];
+  const roleMap = new Map();
+
+  for (const roleName of roles) {
+    const role = await prisma.rol.upsert({
+      where: { nombre: roleName },
+      update: {},
+      create: { nombre: roleName },
+    });
+    roleMap.set(roleName, role.idRol);
+    console.log(`[OK] Role ensured: ${roleName}`);
+  }
+
+  // 2. Create Special Users from Env Vars (or defaults)
+  // Default password for everyone if not specified
+  const defaultPassword = process.env.DEFAULT_PASSWORD || "dannig123";
+  const hashedDefaultPassword = await bcrypt.hash(defaultPassword, 10);
+
+  // Helper to create user with role
+  const createUserWithRole = async (name: string, email: string, password: string | undefined, roleName: string) => {
+    if (!email) return;
+    
+    const hash = password ? await bcrypt.hash(password, 10) : hashedDefaultPassword;
+    
+    const user = await prisma.usuario.upsert({
+      where: { correo: email },
+      update: {
+        nombre: name,
+        // Don't update password if user already exists to prevent lockout, 
+        // unless you want to force reset it. Here we assume safety first.
+      },
+      create: {
+        nombre: name,
+        correo: email,
+        hashPassword: hash,
+        activo: 1,
+      },
+    });
+
+    const roleId = roleMap.get(roleName);
+    if (roleId) {
+      await prisma.usuarioRol.upsert({
+        where: {
+          idUsuario_idRol: {
+            idUsuario: user.idUsuario,
+            idRol: roleId,
+          },
+        },
+        update: {},
+        create: {
+          idUsuario: user.idUsuario,
+          idRol: roleId,
+        },
+      });
+      console.log(`[OK] User ${name} (${roleName}) ensured.`);
+    }
+  };
+
+  // Admin
+  await createUserWithRole(
+    process.env.ADMIN_NAME || "Administrador Principal",
+    process.env.ADMIN_EMAIL || "admin@dannig.cl",
+    process.env.ADMIN_PASSWORD,
+    "Administrador"
+  );
+
+  // Captador
+  await createUserWithRole(
+    process.env.CAPTADOR_NAME || "Captador Demo",
+    process.env.CAPTADOR_EMAIL || "captador@dannig.cl",
+    process.env.CAPTADOR_PASSWORD,
+    "Captador"
+  );
+
+  // Oftalmólogo
+  await createUserWithRole(
+    process.env.OFTALMOLOGO_NAME || "Oftalmólogo Demo",
+    process.env.OFTALMOLOGO_EMAIL || "oftalmologo@dannig.cl",
+    process.env.OFTALMOLOGO_PASSWORD,
+    "Oftalmólogo"
+  );
+
+  // 3. Create demo vendors (Vendedores)
   const hashedPassword = await bcrypt.hash("demo123", 10);
   
   const vendors = [];
@@ -29,34 +112,27 @@ async function main() {
         activo: 1,
       },
     });
+    
+    // Assign Vendedor role
+    await prisma.usuarioRol.upsert({
+        where: {
+          idUsuario_idRol: {
+            idUsuario: vendor.idUsuario,
+            idRol: roleMap.get("Vendedor"),
+          },
+        },
+        update: {},
+        create: {
+          idUsuario: vendor.idUsuario,
+          idRol: roleMap.get("Vendedor"),
+        },
+      });
+
     vendors.push(vendor);
     console.log(`[OK] Created vendor: ${vendor.nombre}`);
   }
 
-  // Create vendor role and assign to users
-  const vendorRole = await prisma.rol.upsert({
-    where: { nombre: "Vendedor" },
-    update: {},
-    create: { nombre: "Vendedor" },
-  });
-
-  for (const vendor of vendors) {
-    await prisma.usuarioRol.upsert({
-      where: {
-        idUsuario_idRol: {
-          idUsuario: vendor.idUsuario,
-          idRol: vendorRole.idRol,
-        },
-      },
-      update: {},
-      create: {
-        idUsuario: vendor.idUsuario,
-        idRol: vendorRole.idRol,
-      },
-    });
-  }
-
-  // Create demo clients
+  // 4. Create demo clients
   const clientNames = [
     { rut: "12345678-9", nombre: "Pedro Silva", sector: "Maipú" },
     { rut: "23456789-0", nombre: "Laura Castro", sector: "Santiago Centro" },
@@ -167,13 +243,16 @@ async function main() {
 
   console.log("\n🎉 Database seeding completed successfully!");
   console.log("\n[INFO] Summary:");
+  console.log(`   - Users Admin, Captador, Oftalmólogo ensured`);
   console.log(`   - ${vendors.length} vendors created`);
   console.log(`   - ${clients.length} clients created`);
   console.log(`   - ${createdProducts.length} products created`);
   console.log(`   - 30 sales created with items`);
-  console.log("\n[INFO] Demo credentials:");
-  console.log("   Email: juan.perez@dannig.cl");
-  console.log("   Password: demo123");
+  console.log("\n[INFO] Credentials:");
+  console.log(`   Admin: ${process.env.ADMIN_EMAIL || "admin@dannig.cl"}`);
+  console.log(`   Captador: ${process.env.CAPTADOR_EMAIL || "captador@dannig.cl"}`);
+  console.log(`   Oftalmólogo: ${process.env.OFTALMOLOGO_EMAIL || "oftalmologo@dannig.cl"}`);
+  console.log("   Vendors: demo123");
 }
 
 main()

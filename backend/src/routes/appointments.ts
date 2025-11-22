@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { prisma } from "../db";
+import { enviarNotificacion, plantillas } from "../services/notificaciones";
 
 // Aceptamos los "nombres viejos" y los mapeamos a los de la BD
 const estadoInputEnum = z.enum([
@@ -100,6 +101,67 @@ export async function appointmentRoutes(app: FastifyInstance) {
         }
       },
     });
+
+    // Send immediate confirmation notification if client has contact info
+    try {
+      if (cita.cliente && (cita.cliente.correo || cita.cliente.telefono)) {
+        const fechaHoraFormateada = new Date(cita.fechaHora).toLocaleString("es-CL", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        const lugar = cita.operativo?.lugar || "Sede Dannig Óptica";
+
+        // Get appropriate template based on appointment state
+        let asunto = "Confirmación de Cita - Dannig Óptica";
+        let mensaje = "";
+
+        if (cita.estado === "Confirmada") {
+          const template = plantillas.confirmacionCita(
+            cita.cliente.nombre,
+            fechaHoraFormateada,
+            lugar
+          );
+          asunto = template.asunto;
+          mensaje = template.mensaje;
+        } else {
+          // For Programada state, send scheduling confirmation
+          const template = plantillas.recordatorioCita(
+            cita.cliente.nombre,
+            fechaHoraFormateada,
+            lugar
+          );
+          asunto = "Cita Agendada - Dannig Óptica";
+          mensaje = `Hola ${cita.cliente.nombre},\n\nTu cita ha sido agendada para:\nFecha y Hora: ${fechaHoraFormateada}\nLugar: ${lugar}\n\nTe esperamos.\n\nSaludos,\nEquipo Dannig Óptica`;
+        }
+
+        // Determine notification channels
+        const canales: Array<"Correo" | "SMS"> = [];
+        if (cita.cliente.correo) canales.push("Correo");
+        if (cita.cliente.telefono) canales.push("SMS");
+
+        if (canales.length > 0) {
+          // Send notification asynchronously to avoid blocking the response
+          enviarNotificacion(
+            cita.cliente.correo || null,
+            cita.cliente.telefono || null,
+            asunto,
+            mensaje,
+            canales
+          ).catch((error) => {
+            req.log.error({ error, citaId: cita.idCita }, 'Error sending appointment confirmation');
+          });
+        }
+      }
+    } catch (error) {
+      // Log error but don't fail the appointment creation
+      req.log.error({ error, citaId: cita.idCita }, 'Error preparing appointment confirmation');
+    }
+
     return reply.code(201).send(cita);
   });
 

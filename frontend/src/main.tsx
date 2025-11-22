@@ -19,6 +19,7 @@ const Reportes = lazy(() => import("./pages/Reportes"));
 const Oftalmologo = lazy(() => import("./pages/Oftalmologo"));
 const Ventas = lazy(() => import("./pages/Ventas"));
 const Alertas = lazy(() => import("./pages/Alertas"));
+const Operativos = lazy(() => import("./pages/Operativos"));
 
 // Loading component for Suspense fallback
 const LoadingFallback = () => (
@@ -122,6 +123,16 @@ const router = createBrowserRouter([
           <Suspense fallback={<LoadingFallback />}>
             <RoleProtectedRoute requiredRole="admin">
               <Alertas />
+            </RoleProtectedRoute>
+          </Suspense>
+        )
+      },
+      { 
+        path: "operativos", 
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <RoleProtectedRoute requiredRole="admin">
+              <Operativos />
             </RoleProtectedRoute>
           </Suspense>
         )

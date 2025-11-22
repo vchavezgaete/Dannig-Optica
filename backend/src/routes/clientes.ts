@@ -2,6 +2,7 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { prisma } from "../db";
+import { registrarAuditoriaDesdeRequest } from "../utils/auditoria";
 import { sanitizeObject } from "../utils/sanitize";
 import { validateRUT } from "../utils/rut";
 
@@ -149,6 +150,17 @@ export async function clienteRoutes(app: FastifyInstance) {
             idVendedor: user?.sub || null 
           } 
         });
+
+        // Log audit
+        registrarAuditoriaDesdeRequest(req, {
+          tabla: "cliente",
+          operacion: "CREATE",
+          registroId: nuevo.idCliente,
+          datosNuevos: nuevo,
+        }).catch((err) => {
+          req.log.warn({ error: err }, "Failed to log audit for cliente creation");
+        });
+
         return nuevo;
       } catch (e: any) {
         // Manejar error de RUT duplicado

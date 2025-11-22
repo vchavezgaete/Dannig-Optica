@@ -14,6 +14,9 @@ import { reporteRoutes } from "./routes/reportes";
 import { ventaRoutes } from "./routes/ventas";
 import { garantiaRoutes } from "./routes/garantias";
 import { alertaRoutes } from "./routes/alertas";
+import { operativoRoutes } from "./routes/operativos";
+import { dashboardRoutes } from "./routes/dashboard";
+import { configuracionRoutes } from "./routes/configuracion";
 import { prisma } from "./db";
 import { iniciarCronJobs } from "./jobs/alertas-cron";
 import { validateEnv, getEnv, isProduction } from "./config/env";
@@ -171,7 +174,10 @@ app.get("/", async (request, reply) => {
         reportes: "/reportes",
         ventas: "/ventas",
         garantias: "/garantias",
-        alertas: "/alertas"
+        alertas: "/alertas",
+        operativos: "/operativos",
+        dashboard: "/dashboard",
+        configuracion: "/configuracion"
       }
   });
 });
@@ -226,6 +232,9 @@ app.register(reporteRoutes, { prefix: "/reportes" });
 app.register(ventaRoutes, { prefix: "/ventas" });
 app.register(garantiaRoutes, { prefix: "/garantias" });
 app.register(alertaRoutes, { prefix: "/alertas" });
+app.register(operativoRoutes, { prefix: "/operativos" });
+app.register(dashboardRoutes, { prefix: "/dashboard" });
+app.register(configuracionRoutes, { prefix: "/configuracion" });
 
 // Manejo global de errores - debe ir después de registrar todas las rutas
 app.setErrorHandler((error, request, reply) => {
