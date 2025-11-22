@@ -11,7 +11,7 @@
 
 [build]
 builder = "DOCKERFILE"
-# Si Root Directory está configurado como "frontend", el dockerfilePath es relativo a ese directorio
+# Si Root Directory está configurado como "frontend", la ruta es relativa a ese directorio
 dockerfilePath = "frontend/Dockerfile"
 
 # Variables de entorno para BUILD (necesarias durante el build)
@@ -20,7 +20,7 @@ dockerfilePath = "frontend/Dockerfile"
 # VITE_API_URL debe ser proporcionada como variable de entorno en Railway Dashboard
 # O actualizada aquí con la URL real del backend después del primer despliegue
 # Formato: https://tu-backend.railway.app o https://backend-production.up.railway.app
-VITE_API_URL = "https://tu-backend-url.railway.app"
+VITE_API_URL = "https://dannig-optica-production.up.railway.app"
 NODE_ENV = "production"
 
 [deploy]
