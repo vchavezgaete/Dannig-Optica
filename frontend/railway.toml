@@ -1,9 +1,17 @@
 # Railway Configuration - DannigOptica Frontend
 # Documentación: https://docs.railway.app/deploy/config-as-code
+#
+# IMPORTANTE: Este archivo será usado automáticamente cuando:
+# 1. Creas un servicio "Frontend" en Railway Dashboard
+# 2. Configuras el Root Directory como "frontend"
+# 3. Railway detectará este railway.toml en frontend/
+#
+# Este archivo configura únicamente el servicio FRONTEND.
+# Para el backend, ver railway.toml en la raíz del proyecto.
 
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "frontend/Dockerfile"
+dockerfilePath = "Dockerfile"
 
 # Variables de entorno para BUILD (necesarias durante el build)
 # Vite necesita estas variables durante el build, no en runtime
@@ -15,6 +23,9 @@ VITE_API_URL = "https://tu-backend-url.railway.app"
 NODE_ENV = "production"
 
 [deploy]
+# Especificar startCommand explícitamente - nginx:alpine no tiene bash, solo sh
+# Ejecutar nginx directamente sin bash - Railway usará sh para ejecutar este comando
+startCommand = "nginx -g 'daemon off;'"
 numReplicas = 1
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10

@@ -35,4 +35,6 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 
 # Comando para iniciar nginx
+# No usar bash aquí - nginx:alpine no tiene bash, solo sh
+# Railway ejecutará este CMD directamente
 CMD ["nginx", "-g", "daemon off;"]

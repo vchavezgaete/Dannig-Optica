@@ -1,5 +1,20 @@
-# Railway configuration for Dannig Óptica Backend
-# This file configures the backend service deployment
+# Railway Configuration - DannigOptica Full Stack
+# 
+# IMPORTANTE: Railway requiere servicios separados en el Dashboard para backend y frontend.
+# Este archivo configura el BACKEND. Para el frontend, ver frontend/railway.toml
+#
+# CONFIGURACIÓN EN RAILWAY DASHBOARD:
+# 1. Crear servicio "Backend" con Root Directory: (vacío/raíz)
+# 2. Crear servicio "Frontend" con Root Directory: frontend
+#
+# Este archivo será usado automáticamente por el servicio Backend
+
+# ============================================================================
+# BACKEND CONFIGURATION
+# ============================================================================
+# Este railway.toml está en la raíz del proyecto y será usado por el servicio Backend
+# cuando el Root Directory esté configurado como vacío o raíz en Railway Dashboard
+
 [build]
 builder = "dockerfile"
 dockerfilePath = "backend/Dockerfile.railway-optimized"
@@ -18,3 +33,47 @@ PORT = "3001"
 SEED_DATABASE = "false"
 # Set FORCE_SEED=true to force seed even if data exists
 FORCE_SEED = "false"
+
+# ============================================================================
+# FRONTEND CONFIGURATION
+# ============================================================================
+# El frontend tiene su propio railway.toml en frontend/railway.toml
+# 
+# Para configurar el Frontend en Railway:
+# 1. Crear servicio "Frontend" en Railway Dashboard
+# 2. Configurar Root Directory como "frontend"
+# 3. Railway detectará automáticamente frontend/railway.toml
+#
+# Variables de entorno requeridas para Frontend:
+# - VITE_API_URL: URL del backend (ej: https://tu-backend.railway.app)
+# - NODE_ENV: production
+#
+# IMPORTANTE: VITE_API_URL debe configurarse ANTES del primer build del frontend
+
+# ============================================================================
+# NOTAS DE DESPLIEGUE
+# ============================================================================
+#
+# ORDEN DE DESPLIEGUE:
+# 1. Crear proyecto en Railway
+# 2. Crear servicio MySQL (Database > MySQL)
+# 3. Crear servicio Backend:
+#    - Root Directory: (vacío)
+#    - Railway usará este railway.toml (raíz)
+#    - Conectar MySQL al Backend (crea DATABASE_URL automáticamente)
+#    - Variables requeridas:
+#      * JWT_SECRET (mínimo 32 caracteres)
+#      * SEED_DATABASE=true (primer despliegue)
+# 4. Obtener URL pública del Backend
+# 5. Crear servicio Frontend:
+#    - Root Directory: frontend
+#    - Railway usará frontend/railway.toml
+#    - Variables requeridas ANTES del build:
+#      * VITE_API_URL=https://tu-backend.railway.app (URL del paso 4)
+#      * NODE_ENV=production
+# 6. Obtener URL pública del Frontend
+# 7. Configurar ALLOWED_ORIGINS en Backend con URL del Frontend
+#
+# Para más detalles, consulta:
+# - RAILWAY_DESPLIEGUE_COMPLETO.md (guía paso a paso completa)
+# - RAILWAY_FRONTEND_SETUP.md (configuración específica del frontend)

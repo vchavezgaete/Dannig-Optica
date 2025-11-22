@@ -41,6 +41,9 @@ const app = Fastify({
 const allowedOrigins = env.ALLOWED_ORIGINS
   ? env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
   : [
+      // Railway domains (accept any .up.railway.app domain)
+      // Railway format: https://service-production-xxxx.up.railway.app
+      // We'll use a pattern match in production
       // Frontend domains (various subdomain combinations)
       'https://app.Dannig-Optica.freeddns.org',
       'https://app.dannig-optica.freeddns.org',
@@ -72,9 +75,21 @@ app.register(cors, {
     // En producción, verificar contra la lista de orígenes permitidos
     // Normalizar el origen para comparación (case-insensitive)
     const normalizedOrigin = origin.toLowerCase();
-    const isAllowed = allowedOrigins.some(allowed => 
-      allowed.toLowerCase() === normalizedOrigin
-    );
+    
+    // Permitir dominios de Railway por defecto (si ALLOWED_ORIGINS no está configurado)
+    const isRailwayDomain = normalizedOrigin.includes('.up.railway.app') || 
+                            normalizedOrigin.includes('.railway.app');
+    
+    let isAllowed: boolean;
+    if (isRailwayDomain && !env.ALLOWED_ORIGINS) {
+      // Si es un dominio de Railway y no hay ALLOWED_ORIGINS configurado, permitir
+      isAllowed = true;
+    } else {
+      // Verificar contra la lista de orígenes permitidos
+      isAllowed = allowedOrigins.some(allowed => 
+        allowed.toLowerCase() === normalizedOrigin
+      );
+    }
 
     if (isAllowed) {
       app.log.debug({ origin, normalizedOrigin }, 'CORS: Origin allowed');
