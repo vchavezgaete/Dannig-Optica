@@ -27,8 +27,6 @@ COPY package.json package-lock.json* ./
 RUN npm ci --include=dev --no-audit --no-fund || \
     (echo "Warning: npm ci failed, trying npm install..." && npm install --no-audit --no-fund)
 
-# Verificar que Vite esta instalado correctamente
-RUN npx vite --version || (echo "ERROR: Vite no esta instalado" && exit 1)
 
 # Copiar codigo fuente del frontend (esto incluye src/, index.html, vite.config.ts, etc.)
 COPY . .
