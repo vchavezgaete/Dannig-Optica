@@ -161,6 +161,10 @@ export async function ventaRoutes(app: FastifyInstance) {
         }
       });
 
+      if (!ventaCompleta) {
+        throw new Error("Error retrieving created venta");
+      }
+
       // Log audit
       registrarAuditoriaDesdeRequest(req, {
         tabla: "venta",
