@@ -12,7 +12,7 @@ ENV VITE_API_URL=$VITE_API_URL
 
 # Copiar package.json y package-lock.json primero (para mejor caching)
 # El contexto es la raíz del repo, así que las rutas deben incluir frontend/
-COPY frontend/package*.json ./
+COPY ./package*.json ./
 
 # Instalar dependencias
 RUN npm install
