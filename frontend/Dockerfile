@@ -17,12 +17,22 @@ COPY frontend/package*.json ./
 # Instalar dependencias
 RUN npm install
 
-# Copiar código fuente del frontend
-# Railway construye desde la raíz, así que necesitamos frontend/
+# Copiar código fuente del frontend completo (incluye nginx.conf)
+# Railway construye desde la raíz cuando dockerfilePath = "frontend/Dockerfile"
+# El contexto de build es la raíz del repo
 COPY frontend/ .
 
-# Copiar nginx.conf en la etapa de build para tenerlo disponible después
-COPY frontend/nginx.conf /tmp/nginx.conf
+# Verificar que nginx.conf existe después de copiar frontend/ y copiarlo a /tmp
+# Después de COPY frontend/ ., el nginx.conf debería estar en /app/nginx.conf
+RUN ls -la && \
+    if [ -f "nginx.conf" ]; then \
+        cp nginx.conf /tmp/nginx.conf && \
+        echo "✅ nginx.conf copiado a /tmp"; \
+    else \
+        echo "❌ ERROR: nginx.conf no encontrado en /app" && \
+        echo "Archivos en /app:" && ls -la && \
+        exit 1; \
+    fi
 
 # Construir la aplicación con variables de entorno
 RUN npm run build
