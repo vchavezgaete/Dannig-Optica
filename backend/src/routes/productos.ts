@@ -5,8 +5,10 @@ export async function productoRoutes(app: FastifyInstance) {
   // Requires JWT authentication on all routes
   app.addHook("preHandler", (app as any).authenticate);
   
-  // Only admin can access products
-  app.addHook("preHandler", (app as any).authorize(["admin"]));
+  // Remove restrictive admin-only check here so other authenticated roles can list products
+  // Or update logic to allow specific roles like 'captador', 'oftalmologo', etc. if needed.
+  // For now, let's allow any authenticated user to read products, 
+  // or move the authorization check to specific methods if write operations are added.
   
   // GET /productos
   app.get("/", async () => {
