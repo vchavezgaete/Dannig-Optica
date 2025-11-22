@@ -11,6 +11,7 @@
 
 [build]
 builder = "DOCKERFILE"
+# Railway construye desde la raíz del repo, por lo que necesitamos la ruta completa
 dockerfilePath = "frontend/Dockerfile"
 
 # Variables de entorno para BUILD (necesarias durante el build)
@@ -23,9 +24,9 @@ VITE_API_URL = "https://tu-backend-url.railway.app"
 NODE_ENV = "production"
 
 [deploy]
-# Especificar startCommand explícitamente - nginx:alpine no tiene bash, solo sh
-# Ejecutar nginx directamente sin bash - Railway usará sh para ejecutar este comando
-startCommand = "nginx -g 'daemon off;'"
+# No especificar startCommand - dejar que Railway use el CMD del Dockerfile
+# El Dockerfile ya tiene: CMD ["nginx", "-g", "daemon off;"]
+# Si Railway requiere un comando explícito, usar la ruta completa de nginx
 numReplicas = 1
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
