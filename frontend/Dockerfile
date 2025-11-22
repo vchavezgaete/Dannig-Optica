@@ -19,7 +19,7 @@ RUN npm install
 
 # Copiar código fuente del frontend completo (esto incluye nginx.conf)
 # El contexto es la raíz del repo, así que las rutas deben incluir frontend/
-COPY frontend/ .
+COPY . .
 
 # Copiar nginx.conf a /tmp antes de construir (estará disponible en la etapa de nginx)
 RUN cp nginx.conf /tmp/nginx.conf || (echo "ERROR: nginx.conf no encontrado" && ls -la && exit 1)
