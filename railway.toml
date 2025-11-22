@@ -20,7 +20,7 @@ builder = "dockerfile"
 dockerfilePath = "backend/Dockerfile.railway-optimized"
 
 [deploy]
-startCommand = "npm run dev"
+startCommand = "/bin/bash ./scripts/railway-init.sh"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
