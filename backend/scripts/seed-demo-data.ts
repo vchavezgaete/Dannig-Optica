@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Starting database seeding...");
+  console.log("[INFO] Starting database seeding...");
 
   // Create demo users (vendors)
   const hashedPassword = await bcrypt.hash("demo123", 10);
@@ -30,7 +30,7 @@ async function main() {
       },
     });
     vendors.push(vendor);
-    console.log(`✅ Created vendor: ${vendor.nombre}`);
+    console.log(`[OK] Created vendor: ${vendor.nombre}`);
   }
 
   // Create vendor role and assign to users
@@ -92,7 +92,7 @@ async function main() {
       },
     });
     clients.push(client);
-    console.log(`✅ Created client: ${client.nombre} (Vendor: ${vendors[vendorIndex].nombre})`);
+    console.log(`[OK] Created client: ${client.nombre} (Vendor: ${vendors[vendorIndex].nombre})`);
   }
 
   // Create demo products
@@ -115,7 +115,7 @@ async function main() {
       create: productData,
     });
     createdProducts.push(product);
-    console.log(`✅ Created product: ${product.nombre}`);
+    console.log(`[OK] Created product: ${product.nombre}`);
   }
 
   // Create demo sales
@@ -162,23 +162,23 @@ async function main() {
       });
     }
 
-    console.log(`✅ Created sale #${sale.idVenta} for ${randomClient.nombre} - Total: $${total}`);
+    console.log(`[OK] Created sale #${sale.idVenta} for ${randomClient.nombre} - Total: $${total}`);
   }
 
   console.log("\n🎉 Database seeding completed successfully!");
-  console.log("\n📊 Summary:");
+  console.log("\n[INFO] Summary:");
   console.log(`   - ${vendors.length} vendors created`);
   console.log(`   - ${clients.length} clients created`);
   console.log(`   - ${createdProducts.length} products created`);
   console.log(`   - 30 sales created with items`);
-  console.log("\n🔐 Demo credentials:");
+  console.log("\n[INFO] Demo credentials:");
   console.log("   Email: juan.perez@dannig.cl");
   console.log("   Password: demo123");
 }
 
 main()
   .catch((e) => {
-    console.error("❌ Error seeding database:", e);
+    console.error("[ERROR] Error seeding database:", e);
     process.exit(1);
   })
   .finally(async () => {

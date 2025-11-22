@@ -348,14 +348,14 @@ export async function procesarAlertasPendientes(): Promise<number> {
           data: { enviado: 1 },
         });
         enviadas++;
-        console.log(`✅ Alerta ${alerta.idAlerta} enviada exitosamente (${resultado.emailEnviado ? 'Email' : ''}${resultado.emailEnviado && resultado.smsEnviado ? ' + ' : ''}${resultado.smsEnviado ? 'SMS' : ''})`);
+        console.log(`[OK] Alert ${alerta.idAlerta} sent successfully (${resultado.emailEnviado ? 'Email' : ''}${resultado.emailEnviado && resultado.smsEnviado ? ' + ' : ''}${resultado.smsEnviado ? 'SMS' : ''})`);
       } else {
         // Log detallado de por qué no se envió
         const razones = resultado.errores || [];
-        console.warn(`⚠️  Alerta ${alerta.idAlerta} no pudo ser enviada: ${razones.join('; ')}`);
+        console.warn(`[WARN] Alert ${alerta.idAlerta} could not be sent: ${razones.join('; ')}`);
       }
     } catch (error: any) {
-      console.error(`❌ Error procesando alerta ${alerta.idAlerta}:`, error.message || error);
+      console.error(`[ERROR] Error processing alert ${alerta.idAlerta}:`, error.message || error);
       // No se marca como enviada si hay error
     }
   }

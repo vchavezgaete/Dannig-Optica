@@ -76,7 +76,7 @@ const updateClienteSchema = z.object({
 });
 
 export async function clienteRoutes(app: FastifyInstance) {
-  // 🔐 Requiere JWT en todas las rutas
+  // Requires JWT authentication on all routes
   app.addHook("preHandler", (app as any).authenticate);
 
   app.get("/", 

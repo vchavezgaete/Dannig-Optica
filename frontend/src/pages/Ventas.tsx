@@ -359,7 +359,7 @@ export default function Ventas() {
       console.log("Enviando venta:", ventaData); // Debug
 
       const res = await api.post<Venta>("/ventas", ventaData);
-      setMsg(`✅ Venta creada exitosamente. Total: ${'$'}${Number(res.data.total).toLocaleString()}`);
+      setMsg(`Venta creada exitosamente. Total: ${'$'}${Number(res.data.total).toLocaleString()}`);
       setVentaCreada(res.data);
       
       // Limpiar formulario (excepto tipoDocumento que mantiene el valor)
@@ -414,7 +414,7 @@ export default function Ventas() {
         condiciones: condicionesGarantia || null
       });
 
-      setMsg("✅ Garantía registrada exitosamente");
+      setMsg("Garantía registrada exitosamente");
       setShowGarantiaModal(false);
       setItemGarantia(null);
       setFechaInicioGarantia("");
@@ -453,8 +453,8 @@ export default function Ventas() {
 
       {/* Alertas */}
       <div style={{ maxWidth: "100%", padding: "0 1rem" }}>
-        {msg && <div className="alert alert--success">✅ {msg}</div>}
-        {err && <div className="alert alert--error">❌ {err}</div>}
+        {msg && <div className="alert alert--success">{msg}</div>}
+        {err && <div className="alert alert--error">{err}</div>}
       </div>
 
       {/* Nueva Venta */}
@@ -491,7 +491,7 @@ export default function Ventas() {
                   onClick={buscarCliente}
                   disabled={loading}
                 >
-                  🔍 Buscar
+                  Buscar
                 </button>
               </div>
               <div style={{ 
@@ -499,7 +499,7 @@ export default function Ventas() {
                 fontSize: '0.8rem', 
                 marginTop: '0.25rem' 
               }}>
-                💡 El RUT se formatea automáticamente con puntos y guion
+                El RUT se formatea automáticamente con puntos y guion
               </div>
             </div>
           </div>
@@ -568,10 +568,10 @@ export default function Ventas() {
               }}>
                 {tipoDocumento === "Factura" ? (
                   <span style={{ color: "#059669", fontWeight: "600" }}>
-                    ℹ️ La factura incluirá cálculo de IVA (19%) y requiere RUT del cliente
+                    La factura incluirá cálculo de IVA (19%) y requiere RUT del cliente
                   </span>
                 ) : (
-                  <span>💡 La boleta no incluye IVA (precio final)</span>
+                  <span>La boleta no incluye IVA (precio final)</span>
                 )}
               </div>
             </div>
@@ -596,7 +596,7 @@ export default function Ventas() {
                     <h4 style={{ marginTop: 0 }}>Agregar Producto</h4>
                     {productos.length === 0 ? (
                       <div className="alert alert--warning">
-                        <strong>⚠️ No hay productos disponibles</strong>
+                        <strong>No hay productos disponibles</strong>
                         <p style={{ margin: "0.5rem 0 0", fontSize: "0.9rem" }}>
                           Para poder agregar productos a una venta, primero necesitas tener productos registrados en el sistema.
                         </p>
@@ -615,7 +615,7 @@ export default function Ventas() {
                           onClick={loadData}
                           style={{ marginTop: "1rem", width: "auto" }}
                         >
-                          🔄 Recargar Productos
+                          Recargar Productos
                         </button>
                       </div>
                     ) : (
@@ -678,7 +678,7 @@ export default function Ventas() {
                             onClick={agregarProducto}
                             style={{ whiteSpace: "nowrap" }}
                           >
-                            ✅ Agregar
+                            Agregar
                           </button>
                         </div>
                       </div>
@@ -719,7 +719,7 @@ export default function Ventas() {
                                     className="btn btn--secondary btn--small"
                                     onClick={() => eliminarItem(index)}
                                   >
-                                    🗑️
+                                    Eliminar
                                   </button>
                                 </td>
                               </tr>
@@ -744,7 +744,7 @@ export default function Ventas() {
                         onClick={crearVenta}
                         disabled={loading}
                       >
-                        {loading ? "⏳ Guardando..." : "💰 Registrar Venta"}
+                        {loading ? "Guardando..." : "Registrar Venta"}
                       </button>
                     </div>
                   </>
@@ -758,7 +758,7 @@ export default function Ventas() {
             <div className="card" style={{ marginTop: "1.5rem", padding: "1.5rem", background: "linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)", border: "2px solid #3b82f6" }}>
               <div style={{ marginBottom: "1rem" }}>
                 <h3 style={{ margin: "0 0 0.5rem", color: "#1e40af" }}>
-                  ✅ Venta creada exitosamente
+                  Venta creada exitosamente
                 </h3>
                 <p style={{ margin: "0.25rem 0", color: "#1e3a8a" }}>
                   <strong>Número:</strong> {ventaCreada.tipoDocumento === "Factura" ? "FAC" : "BOL"}-{ventaCreada.idVenta.toString().padStart(6, "0")}
@@ -792,7 +792,7 @@ export default function Ventas() {
                   }}
                   style={{ flex: "1 1 auto", minWidth: "150px" }}
                 >
-                  👁️ Ver PDF
+                  Ver PDF
                 </button>
                 <button
                   className="btn btn--secondary"
@@ -825,7 +825,7 @@ export default function Ventas() {
                   }}
                   style={{ flex: "0 1 auto" }}
                 >
-                  ✖️ Cerrar
+                  Cerrar
                 </button>
               </div>
             </div>
@@ -836,7 +836,7 @@ export default function Ventas() {
       {/* Historial de Ventas */}
       <div className="section" style={{ maxWidth: "100%", overflowX: "hidden" }}>
         <div className="section__header">
-          <h2 className="section__title">📋 Historial de Ventas</h2>
+          <h2 className="section__title">Historial de Ventas</h2>
           <p className="section__subtitle">
             {ventas.length} ventas registradas
           </p>
@@ -918,7 +918,7 @@ export default function Ventas() {
                     }}
                     title="Ver PDF"
                   >
-                    👁️ Ver PDF
+                    Ver PDF
                   </button>
                   <button
                     className="btn btn--secondary btn--small"
@@ -966,7 +966,7 @@ export default function Ventas() {
                           <td>
                             {item.garantia ? (
                               <span style={{ color: "var(--verde)", fontSize: "0.9rem" }}>
-                                ✅ Hasta {new Date(item.garantia.fechaFin).toLocaleDateString('es-CL')}
+                                Hasta {new Date(item.garantia.fechaFin).toLocaleDateString('es-CL')}
                               </span>
                             ) : (
                               <button
@@ -1011,7 +1011,7 @@ export default function Ventas() {
             maxHeight: "90vh",
             overflowY: "auto"
           }}>
-            <h3 style={{ marginTop: 0 }}>📋 Registrar Garantía</h3>
+            <h3 style={{ marginTop: 0 }}>Registrar Garantía</h3>
             
             <div className="form">
               <div className="form__group">
@@ -1060,7 +1060,7 @@ export default function Ventas() {
                 onClick={crearGarantia}
                 disabled={loading}
               >
-                {loading ? "⏳ Guardando..." : "💾 Registrar Garantía"}
+                {loading ? "Guardando..." : "Registrar Garantía"}
               </button>
             </div>
           </div>

@@ -23,10 +23,10 @@ function mapEstado(input?: z.infer<typeof estadoInputEnum>) {
 }
 
 export async function appointmentRoutes(app: FastifyInstance) {
-  // 🔐 Requiere JWT en todas las rutas de este módulo
+  // Requires JWT authentication on all routes of this module
   app.addHook("preHandler", (app as any).authenticate);
   
-  // 🔒 Admin y oftalmólogo pueden acceder a appointments
+  // Admin and ophthalmologist can access appointments
   app.addHook("preHandler", (app as any).authorize(["admin", "oftalmologo"]));
 
   // ── Schemas (compat: aceptamos leadId o clienteId)

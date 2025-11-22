@@ -53,8 +53,8 @@ const createEmailTransporter = () => {
     const smtpFrom = env.SMTP_FROM || smtpUser || "noreply@dannig.cl";
 
     if (!smtpUser || !smtpPass) {
-      console.warn("⚠️  SMTP no configurado. Las notificaciones por email no funcionarán.");
-      console.warn("   Configura SMTP_USER y SMTP_PASSWORD en las variables de entorno.");
+      console.warn("[WARN] SMTP not configured. Email notifications will not work.");
+      console.warn("       Configure SMTP_USER and SMTP_PASSWORD in environment variables.");
       return null;
     }
 
@@ -75,7 +75,7 @@ const createEmailTransporter = () => {
     const smtpPass = process.env.SMTP_PASSWORD;
 
     if (!smtpUser || !smtpPass) {
-      console.warn("⚠️  SMTP no configurado. Las notificaciones por email no funcionarán.");
+      console.warn("[WARN] SMTP not configured. Email notifications will not work.");
       return null;
     }
 
@@ -102,8 +102,8 @@ const emailTransporter = createEmailTransporter();
  */
 export async function enviarEmail(notificacion: NotificacionEmail): Promise<{ success: boolean; error?: string }> {
   if (!emailTransporter) {
-    const errorMsg = "SMTP no configurado. Configura SMTP_USER y SMTP_PASSWORD.";
-    console.error(`❌ No se puede enviar email a ${notificacion.to}: ${errorMsg}`);
+    const errorMsg = "SMTP not configured. Configure SMTP_USER and SMTP_PASSWORD.";
+    console.error(`[ERROR] Cannot send email to ${notificacion.to}: ${errorMsg}`);
     return { success: false, error: errorMsg };
   }
 
@@ -124,11 +124,11 @@ export async function enviarEmail(notificacion: NotificacionEmail): Promise<{ su
       text: notificacion.text || notificacion.html.replace(/<[^>]*>/g, ""), // Extrae texto plano del HTML
     });
 
-    console.log(`✅ Email enviado a ${notificacion.to}`);
+    console.log(`[OK] Email sent to ${notificacion.to}`);
     return { success: true };
   } catch (error: any) {
-    const errorMsg = error.message || "Error desconocido al enviar email";
-    console.error(`❌ Error enviando email a ${notificacion.to}:`, errorMsg);
+    const errorMsg = error.message || "Unknown error sending email";
+    console.error(`[ERROR] Error sending email to ${notificacion.to}:`, errorMsg);
     return { success: false, error: errorMsg };
   }
 }
@@ -173,8 +173,8 @@ export async function enviarSMS(notificacion: NotificacionSMS): Promise<{ succes
 
   // Si no hay configuración de SMS, retornar error claro
   if (!smsApiKey && !twilioAccountSid) {
-    const errorMsg = "SMS no configurado. Configura SMS_API_KEY o credenciales de Twilio.";
-    console.warn(`⚠️  ${errorMsg}`);
+    const errorMsg = "SMS not configured. Configure SMS_API_KEY or Twilio credentials.";
+    console.warn(`[WARN] ${errorMsg}`);
     return { success: false, error: errorMsg };
   }
 
@@ -183,12 +183,12 @@ export async function enviarSMS(notificacion: NotificacionSMS): Promise<{ succes
   try {
     const env = getEnv();
     if (env.NODE_ENV !== 'production') {
-      console.log(`📱 [SMS SIMULADO] A ${notificacion.to}: ${notificacion.message.substring(0, 50)}...`);
+      console.log(`[INFO] [SIMULATED SMS] To ${notificacion.to}: ${notificacion.message.substring(0, 50)}...`);
       return { success: true };
     }
   } catch {
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`📱 [SMS SIMULADO] A ${notificacion.to}: ${notificacion.message.substring(0, 50)}...`);
+      console.log(`[INFO] [SIMULATED SMS] To ${notificacion.to}: ${notificacion.message.substring(0, 50)}...`);
       return { success: true };
     }
   }
@@ -196,7 +196,7 @@ export async function enviarSMS(notificacion: NotificacionSMS): Promise<{ succes
   // En producción sin configuración real, fallar silenciosamente
   if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
     const errorMsg = "Twilio no configurado completamente. Configura TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN y TWILIO_PHONE_NUMBER.";
-    console.error(`❌ No se puede enviar SMS a ${notificacion.to}: ${errorMsg}`);
+    console.error(`[ERROR] Cannot send SMS to ${notificacion.to}: ${errorMsg}`);
     return { success: false, error: errorMsg };
   }
 
@@ -216,8 +216,8 @@ export async function enviarSMS(notificacion: NotificacionSMS): Promise<{ succes
   // }
 
   // Por ahora, en producción sin implementación real, retornar error
-  const errorMsg = "SMS real no implementado. Configura Twilio e implementa el código.";
-  console.error(`❌ ${errorMsg}`);
+  const errorMsg = "Real SMS not implemented. Configure Twilio and implement the code.";
+  console.error(`[ERROR] ${errorMsg}`);
   return { success: false, error: errorMsg };
 }
 

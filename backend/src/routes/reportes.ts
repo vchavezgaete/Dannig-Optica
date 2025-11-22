@@ -3,10 +3,10 @@ import { FastifyInstance } from "fastify";
 import { prisma } from "../db";
 
 export async function reporteRoutes(app: FastifyInstance) {
-  // 🔐 Require JWT on all routes
+  // Requires JWT authentication on all routes
   app.addHook("preHandler", (app as any).authenticate);
   
-  // 🔒 Solo admin puede acceder a reportes
+  // Only admin can access reports
   app.addHook("preHandler", (app as any).authorize(["admin"]));
 
   app.get("/", async (req, reply) => {

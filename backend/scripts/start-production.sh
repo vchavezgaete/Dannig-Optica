@@ -5,54 +5,54 @@
 
 set -e  # Salir si cualquier comando falla
 
-echo "🚀 Iniciando DannigOptica Backend..."
-echo "📊 Verificando configuración de base de datos..."
+echo "[INFO] Starting DannigOptica Backend..."
+echo "[INFO] Verifying database configuration..."
 
-# Detectar tipo de base de datos
+# Detect database type
 if [[ "$DATABASE_URL" == *"postgresql"* ]]; then
-    echo "🐘 PostgreSQL detectado"
+    echo "[INFO] PostgreSQL detected"
     
-    # Generar cliente Prisma para PostgreSQL
-    echo "⚙️ Generando cliente Prisma para PostgreSQL..."
+    # Generate Prisma client for PostgreSQL
+    echo "[INFO] Generating Prisma client for PostgreSQL..."
     npx prisma generate --schema=./prisma/schema.prisma
     
-    # Aplicar migraciones con reintentos
-    echo "🔄 Aplicando migraciones a PostgreSQL..."
+    # Apply migrations with retries
+    echo "[INFO] Applying migrations to PostgreSQL..."
     for i in {1..3}; do
-        echo "Intento $i de migración..."
+        echo "Migration attempt $i..."
         if npx prisma db push --accept-data-loss --schema=./prisma/schema.prisma; then
-            echo "✅ Migración PostgreSQL completada exitosamente"
+            echo "[OK] PostgreSQL migration completed successfully"
             break
         else
-            echo "❌ Intento $i falló, reintentando..."
+            echo "[ERROR] Attempt $i failed, retrying..."
             sleep 5
         fi
     done
     
 else
-    echo "🐬 MySQL detectado"
+    echo "[INFO] MySQL detected"
     
-    # Verificar si el host mysql existe
+    # Verify if mysql host exists
     if nslookup mysql >/dev/null 2>&1; then
-        echo "✅ Host 'mysql' encontrado, esperando conexión..."
+        echo "[OK] Host 'mysql' found, waiting for connection..."
         until nc -z mysql 3306; do
-            echo "⏳ Esperando MySQL..."
+            echo "[INFO] Waiting for MySQL..."
             sleep 2
         done
-        echo "✅ MySQL disponible"
+        echo "[OK] MySQL available"
     else
-        echo "⚠️ Host 'mysql' no encontrado, saltando verificación de conexión"
+        echo "[WARN] Host 'mysql' not found, skipping connection verification"
     fi
     
-    # Generar cliente Prisma para MySQL
-    echo "⚙️ Generando cliente Prisma para MySQL..."
+    # Generate Prisma client for MySQL
+    echo "[INFO] Generating Prisma client for MySQL..."
     npx prisma generate --schema=./prisma/schema.prisma
     
-    # Sincronizar schema
-    echo "🔄 Sincronizando schema MySQL..."
+    # Sync schema
+    echo "[INFO] Syncing MySQL schema..."
     npx prisma db push --accept-data-loss --schema=./prisma/schema.prisma
-    echo "✅ Schema MySQL sincronizado exitosamente"
+    echo "[OK] MySQL schema synced successfully"
 fi
 
-echo "🎯 Iniciando servidor Node.js..."
+echo "[INFO] Starting Node.js server..."
 node dist/server.js

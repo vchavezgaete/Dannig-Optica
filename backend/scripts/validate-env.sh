@@ -3,29 +3,29 @@
 # Script de validación de variables de entorno para deployment
 set -e
 
-echo "🔍 Validando variables de entorno..."
+echo "[INFO] Validating environment variables..."
 
-# Verificar DATABASE_URL
+# Verify DATABASE_URL
 if [ -z "$DATABASE_URL" ]; then
-    echo "❌ ERROR: DATABASE_URL no está configurada"
-    echo "📋 Variables de entorno disponibles:"
-    env | grep -E "(DATABASE|NODE_ENV|PORT|JWT)" || echo "No se encontraron variables relevantes"
+    echo "[ERROR] DATABASE_URL is not configured"
+    echo "[INFO] Available environment variables:"
+    env | grep -E "(DATABASE|NODE_ENV|PORT|JWT)" || echo "No relevant variables found"
     exit 1
 else
-    echo "✅ DATABASE_URL configurada: ${DATABASE_URL:0:20}..."
+    echo "[OK] DATABASE_URL configured: ${DATABASE_URL:0:20}..."
 fi
 
-# Verificar NODE_ENV
+# Verify NODE_ENV
 if [ -z "$NODE_ENV" ]; then
-    echo "⚠️ WARNING: NODE_ENV no está configurada, usando 'development'"
+    echo "[WARN] NODE_ENV is not configured, using 'development'"
     export NODE_ENV=development
 else
-    echo "✅ NODE_ENV: $NODE_ENV"
+    echo "[OK] NODE_ENV: $NODE_ENV"
 fi
 
-# Verificar PORT
+# Verify PORT
 if [ -z "$PORT" ]; then
-    echo "⚠️ WARNING: PORT no está configurada, usando 3001"
+    echo "[WARN] PORT is not configured, using 3001"
     export PORT=3001
 else
     echo "✅ PORT: $PORT"

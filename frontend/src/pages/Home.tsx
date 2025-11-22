@@ -44,7 +44,7 @@ export default function Home() {
       <div className="grid">
         <div className="section">
           <div className="section__header">
-            <h1 className="section__title">🔒 Acceso Restringido</h1>
+            <h1 className="section__title">Acceso Restringido</h1>
             <p className="section__subtitle">
               Este módulo solo es visible para administradores
             </p>
@@ -69,7 +69,7 @@ export default function Home() {
               margin: "1rem 0"
             }}>
               <h4 style={{ margin: "0 0 0.5rem", color: "var(--verde)" }}>
-                📋 Módulos disponibles para ti:
+                Módulos disponibles para ti:
               </h4>
               <ul style={{ margin: "0", textAlign: "left", display: "inline-block" }}>
                 <li><strong>Captación:</strong> Registrar nuevos clientes</li>
@@ -101,7 +101,7 @@ export default function Home() {
           
           <div className="alert alert--info" style={{ textAlign: "center", padding: "2rem" }}>
             <h3 style={{ margin: "0 0 1rem", color: "var(--azul)" }}>
-              👨‍⚕️ Bienvenido Dr. Oftalmólogo
+              Bienvenido Dr. Oftalmólogo
             </h3>
             <p style={{ margin: "0 0 1rem", fontSize: "1.1rem" }}>
               Tienes acceso completo a la información clínica de todos los clientes.
@@ -147,7 +147,7 @@ export default function Home() {
   if (err) {
     return (
       <div className="alert alert--error">
-        ❌ {err}
+        {err}
       </div>
     );
   }
@@ -165,7 +165,7 @@ export default function Home() {
         
         <div className="grid grid--3">
           <div className="card">
-            <h3 style={{ margin: "0 0 0.5rem", color: "var(--verde)" }}>📋 Captación</h3>
+            <h3 style={{ margin: "0 0 0.5rem", color: "var(--verde)" }}>Captación</h3>
             <p style={{ margin: 0, color: "var(--texto-sec)" }}>
               Módulo para captadores: Registra clientes captados en terreno con sus datos de contacto
             </p>
@@ -190,7 +190,7 @@ export default function Home() {
       {/* Products Section */}
       <div className="section">
         <div className="section__header">
-          <h2 className="section__title">🛍️ Catálogo de Productos</h2>
+          <h2 className="section__title">Catálogo de Productos</h2>
           <p className="section__subtitle">
             {data.length} productos disponibles en el sistema
           </p>
@@ -198,7 +198,7 @@ export default function Home() {
 
         {data.length === 0 ? (
           <div className="alert alert--info">
-            ℹ️ No hay productos registrados en el sistema
+            No hay productos registrados en el sistema
           </div>
         ) : (
           <div className="table-container" style={{ overflowX: "auto" }}>

@@ -125,7 +125,7 @@ export function validateEnv(): Env {
         code: err.code
       }));
       
-      console.error('❌ Environment variables validation failed:');
+      console.error('[ERROR] Environment variables validation failed:');
       console.error('\nMissing or invalid variables:');
       missing.forEach(({ path, message }) => {
         console.error(`  - ${path}: ${message}`);
@@ -136,9 +136,9 @@ export function validateEnv(): Env {
       const isDevelopment = process.env.NODE_ENV !== 'production';
       
       if (isJWTSecretOnly && isDevelopment) {
-        console.warn('\n⚠️  JWT_SECRET validation warning in development.');
-        console.warn('   Using default/fallback JWT_SECRET for development only.');
-        console.warn('   This is NOT secure for production!');
+        console.warn('\n[WARN] JWT_SECRET validation warning in development.');
+        console.warn('       Using default/fallback JWT_SECRET for development only.');
+        console.warn('       This is NOT secure for production!');
         
         // Permitir continuar en desarrollo con un valor por defecto temporal
         const tempSecret = process.env.JWT_SECRET || 'dev-secret-temp-' + Date.now();

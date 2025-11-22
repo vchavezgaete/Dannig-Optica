@@ -24,7 +24,7 @@ try {
   validateEnv();
   env = getEnv();
 } catch (error: any) {
-  console.error('❌ Failed to validate environment variables:', error.message);
+  console.error('[ERROR] Failed to validate environment variables:', error.message);
   console.error('\nThe server cannot start without proper configuration.');
   console.error('Please check the errors above and fix your environment variables.');
   process.exit(1);

@@ -2,10 +2,10 @@ import { FastifyInstance } from "fastify";
 import { prisma } from "../db";
 
 export async function fichaClinicaRoutes(app: FastifyInstance) {
-  // 🔐 Requiere JWT en todas las rutas
+  // Requires JWT authentication on all routes
   app.addHook("preHandler", (app as any).authenticate);
 
-  // 🔒 Solo oftalmólogos y admin pueden acceder
+  // Only ophthalmologists and admin can access
   app.addHook("preHandler", (app as any).authorize(["admin", "oftalmologo"]));
 
   // POST /fichas-clinicas - Crear ficha clínica

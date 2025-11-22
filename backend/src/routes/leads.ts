@@ -2,7 +2,7 @@ import { FastifyInstance } from "fastify";
 import { prisma } from "../db";
 
 export async function leadRoutes(app: FastifyInstance) {
-  // 🔐 Todas las rutas requieren token
+  // All routes require JWT authentication
   app.addHook("preHandler", (app as any).authenticate);
 
   // GET /leads  → lista clientes (opcional: ?q=texto&limit=100)

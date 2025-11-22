@@ -4,43 +4,43 @@
 
 set -e
 
-echo "🔍 Verificando entorno antes de iniciar nginx..."
+echo "[INFO] Verifying environment before starting nginx..."
 
-# Verificar que los archivos existen
+# Verify static files exist
 if [ ! -d "/usr/share/nginx/html" ]; then
-    echo "❌ ERROR: /usr/share/nginx/html no existe"
+    echo "[ERROR] /usr/share/nginx/html does not exist"
     exit 1
 fi
 
 if [ ! -f "/usr/share/nginx/html/index.html" ]; then
-    echo "❌ ERROR: index.html no encontrado en /usr/share/nginx/html"
-    echo "📁 Contenido de /usr/share/nginx/html:"
+    echo "[ERROR] index.html not found in /usr/share/nginx/html"
+    echo "[INFO] Contents of /usr/share/nginx/html:"
     ls -la /usr/share/nginx/html
     exit 1
 fi
 
-echo "✅ Archivos estáticos encontrados en /usr/share/nginx/html"
+echo "[OK] Static files found in /usr/share/nginx/html"
 
-# Verificar configuración de nginx
+# Verify nginx configuration exists
 if [ ! -f "/etc/nginx/conf.d/default.conf" ]; then
-    echo "❌ ERROR: default.conf no encontrado"
+    echo "[ERROR] default.conf not found"
     exit 1
 fi
 
-echo "✅ Configuración de nginx encontrada"
+echo "[OK] Nginx configuration found"
 
-# Test de configuración de nginx
-echo "🔧 Verificando configuración de nginx..."
+# Test nginx configuration
+echo "[INFO] Testing nginx configuration..."
 if ! nginx -t; then
-    echo "❌ ERROR: Configuración de nginx inválida"
-    echo "📄 Contenido de default.conf:"
+    echo "[ERROR] Invalid nginx configuration"
+    echo "[INFO] Contents of default.conf:"
     cat /etc/nginx/conf.d/default.conf
     exit 1
 fi
 
-echo "✅ Configuración de nginx válida"
-echo "🚀 Iniciando nginx en primer plano..."
+echo "[OK] Nginx configuration is valid"
+echo "[INFO] Starting nginx in foreground mode..."
 
-# Iniciar nginx en primer plano
+# Start nginx in foreground
 exec nginx -g 'daemon off;'
 
