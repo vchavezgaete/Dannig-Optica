@@ -30,8 +30,8 @@ NODE_ENV = "production"
 numReplicas = 1
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
-healthcheckPath = "/"
-healthcheckTimeout = 300  # 5 minutos para inicialización
+healthcheckPath = "/health"  # Endpoint específico para healthcheck
+healthcheckTimeout = 60  # 1 minuto es suficiente si nginx inicia correctamente
 
 # NOTA IMPORTANTE SOBRE VITE_API_URL: 
 # 
