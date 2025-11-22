@@ -33,7 +33,7 @@ restartPolicyMaxRetries = 10
 healthcheckPath = "/"
 healthcheckTimeout = 300  # 5 minutos para inicialización
 
-# NOTA IMPORTANTE SOBRE VITE_API_URL:
+# NOTA IMPORTANTE SOBRE VITE_API_URL: 
 # 
 # En Vite, las variables de entorno deben estar disponibles durante el BUILD, no en runtime.
 # Por lo tanto, VITE_API_URL debe configurarse en Railway Dashboard como variable de entorno
