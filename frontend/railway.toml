@@ -11,7 +11,7 @@
 
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+dockerfilePath = "frontend/Dockerfile"
 
 # Variables de entorno para BUILD (necesarias durante el build)
 # Vite necesita estas variables durante el build, no en runtime
