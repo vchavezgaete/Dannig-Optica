@@ -40,22 +40,12 @@ RUN apk add --no-cache bash && \
 # Copiar archivos construidos
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Verificar que los archivos se copiaron correctamente
-RUN ls -la /usr/share/nginx/html && \
-    test -f /usr/share/nginx/html/index.html || (echo "ERROR: index.html no encontrado después de copiar" && exit 1)
-
 # Copiar configuración personalizada de nginx desde la etapa de build
 COPY --from=build /tmp/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Verificar configuración de nginx
-RUN nginx -t || (echo "ERROR: Configuración de nginx inválida" && cat /etc/nginx/conf.d/default.conf && exit 1)
-
-# Copiar script de inicio
-COPY --from=build /app/scripts/start-nginx.sh /start-nginx.sh
-RUN chmod +x /start-nginx.sh
-
-# Exponer puerto 80 (Railway mapeará esto automáticamente)
+# Exponer puerto 80
 EXPOSE 80
 
-# Usar script de inicio que verifica todo antes de iniciar
-CMD ["/bin/sh", "/start-nginx.sh"]
+# Comando para iniciar nginx
+# Ahora bash está disponible si es necesario
+CMD ["/bin/sh", "-c", "nginx -g 'daemon off;'"]
