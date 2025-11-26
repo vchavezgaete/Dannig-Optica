@@ -6,6 +6,12 @@ import { registrarAuditoriaDesdeRequest } from "../utils/auditoria";
 import { sanitizeObject } from "../utils/sanitize";
 import { validateRUT } from "../utils/rut";
 
+// Función auxiliar para convertir string vacío a null/undefined
+const emptyToNull = (val: unknown) => {
+  if (typeof val === "string" && val.trim() === "") return null;
+  return val;
+};
+
 // Schema de validación para crear cliente
 const createClienteSchema = z.object({
   rut: z.string()
@@ -18,23 +24,23 @@ const createClienteSchema = z.object({
   nombre: z.string()
     .min(2, "Nombre debe tener al menos 2 caracteres")
     .max(100, "Nombre no puede exceder 100 caracteres"),
-  telefono: z.string()
+  telefono: z.preprocess(emptyToNull, z.string()
     .regex(/^\+?[1-9]\d{1,14}$/, "Teléfono debe tener formato válido")
-    .optional()
-    .nullable(),
-  correo: z.string()
+    .nullable()
+    .optional()),
+  correo: z.preprocess(emptyToNull, z.string()
     .email("Correo debe tener formato válido")
     .max(120, "Correo no puede exceder 120 caracteres")
-    .optional()
-    .nullable(),
-  direccion: z.string()
-    .max(150, "Dirección no puede exceder 150 caracteres")
-    .optional()
-    .nullable(),
-  sector: z.string()
-    .max(80, "Sector no puede exceder 80 caracteres")
-    .optional()
     .nullable()
+    .optional()),
+  direccion: z.preprocess(emptyToNull, z.string()
+    .max(150, "Dirección no puede exceder 150 caracteres")
+    .nullable()
+    .optional()),
+  sector: z.preprocess(emptyToNull, z.string()
+    .max(80, "Sector no puede exceder 80 caracteres")
+    .nullable()
+    .optional())
 }).refine(
   (data) => data.telefono || data.correo,
   {
@@ -57,27 +63,27 @@ const updateClienteSchema = z.object({
     .min(2, "Nombre debe tener al menos 2 caracteres")
     .max(100, "Nombre no puede exceder 100 caracteres")
     .optional(),
-  telefono: z.string()
+  telefono: z.preprocess(emptyToNull, z.string()
     .regex(/^\+?[1-9]\d{1,14}$/, "Teléfono debe tener formato válido")
-    .optional()
-    .nullable(),
-  correo: z.string()
+    .nullable()
+    .optional()),
+  correo: z.preprocess(emptyToNull, z.string()
     .email("Correo debe tener formato válido")
     .max(120, "Correo no puede exceder 120 caracteres")
-    .optional()
-    .nullable(),
-  direccion: z.string()
-    .max(150, "Dirección no puede exceder 150 caracteres")
-    .optional()
-    .nullable(),
-  sector: z.string()
-    .max(80, "Sector no puede exceder 80 caracteres")
-    .optional()
     .nullable()
+    .optional()),
+  direccion: z.preprocess(emptyToNull, z.string()
+    .max(150, "Dirección no puede exceder 150 caracteres")
+    .nullable()
+    .optional()),
+  sector: z.preprocess(emptyToNull, z.string()
+    .max(80, "Sector no puede exceder 80 caracteres")
+    .nullable()
+    .optional())
 });
 
 export async function clienteRoutes(app: FastifyInstance) {
-  // Requires JWT authentication on all routes
+  // Autenticación requerida para todas las rutas
   app.addHook("preHandler", (app as any).authenticate);
 
   app.get("/", 
@@ -88,16 +94,15 @@ export async function clienteRoutes(app: FastifyInstance) {
       
       const where: any = {};
       
-      // Si es captador, solo ver sus propios clientes
+      // Captadores solo ven sus clientes, excepto si tienen rol admin
       if (user.roles.includes("captador") && !user.roles.includes("admin")) {
         where.idVendedor = user.sub;
       }
-      // Si es oftalmólogo, puede ver todos los clientes (acceso clínico completo)
       
-      // Búsqueda por RUT o parámetro q (para compatibilidad)
+      // Búsqueda por RUT o texto general
       const searchTerm = (rut || q || "").trim();
       if (searchTerm) {
-        // Buscar por RUT exacto o parcial, o por nombre
+        // Normalizar RUT eliminando puntos y guión
         const rutLimpio = searchTerm.replace(/[.-]/g, "");
         where.OR = [
           { rut: searchTerm },
@@ -106,7 +111,7 @@ export async function clienteRoutes(app: FastifyInstance) {
         ];
       }
       
-      // Si hay búsqueda y se quiere un resultado único, retornar el primero
+      // Retornar resultado único si hay búsqueda específica
       if (searchTerm) {
         const cliente = await prisma.cliente.findFirst({
           where,
@@ -115,7 +120,7 @@ export async function clienteRoutes(app: FastifyInstance) {
         return cliente ? [cliente] : [];
       }
       
-      // Si no hay búsqueda, listar clientes según permisos
+      // Listado general paginado
       return prisma.cliente.findMany({
         where,
         take: 200,
@@ -127,7 +132,7 @@ export async function clienteRoutes(app: FastifyInstance) {
   app.post("/", 
     { preHandler: (app as any).authorize(["admin", "captador"]) },
     async (req, reply) => {
-      // Validar input con Zod
+      // Validar datos de entrada
       const parsed = createClienteSchema.safeParse(req.body);
       
       if (!parsed.success) {
@@ -138,10 +143,9 @@ export async function clienteRoutes(app: FastifyInstance) {
       }
 
       try {
-        // Capture the authenticated user as the salesperson
         const user = (req as any).user;
         
-        // Sanitize input data to prevent XSS
+        // Sanitizar datos para prevenir XSS
         const sanitizedData = sanitizeObject(parsed.data);
         
         const nuevo = await prisma.cliente.create({ 
@@ -151,41 +155,42 @@ export async function clienteRoutes(app: FastifyInstance) {
           } 
         });
 
-        // Log audit
+        // Registrar auditoría
         registrarAuditoriaDesdeRequest(req, {
           tabla: "cliente",
           operacion: "CREATE",
           registroId: nuevo.idCliente,
           datosNuevos: nuevo,
         }).catch((err) => {
-          req.log.warn({ error: err }, "Failed to log audit for cliente creation");
+          req.log.warn({ error: err }, "Error registrando auditoría de creación");
         });
 
         return nuevo;
       } catch (e: any) {
-        // Manejar error de RUT duplicado
+        // Error de duplicidad (RUT único)
         if (e?.code === "P2002" && e?.meta?.target?.includes("rut")) {
           return reply.status(409).send({ error: "RUT ya existe" });
         }
-        req.log.error({ error: e }, 'Error creating cliente');
+        req.log.error({ error: e }, 'Error creando cliente');
         return reply.status(500).send({ error: "Error interno del servidor" });
       }
     }
   );
 
-  // PUT /clientes/:id - Actualizar cliente (solo admin)
+  // PUT /clientes/:id - Actualizar cliente
   app.put("/:id", 
-    { preHandler: (app as any).authorize(["admin"]) },
+    { preHandler: (app as any).authorize(["admin", "captador"]) },
     async (req, reply) => {
       const { id } = req.params as { id: string };
+      const user = (req as any).user;
       
-      // Validar ID
+      // Validar ID numérico
       const idCliente = Number(id);
       if (isNaN(idCliente) || idCliente <= 0) {
         return reply.status(400).send({ error: "ID inválido" });
       }
 
-      // Validar input con Zod
+      // Validar esquema de datos
       const parsed = updateClienteSchema.safeParse(req.body);
       
       if (!parsed.success) {
@@ -196,32 +201,54 @@ export async function clienteRoutes(app: FastifyInstance) {
       }
 
       try {
-        // Verificar que el cliente existe
+        // Verificar existencia del cliente
         const existe = await prisma.cliente.findUnique({ where: { idCliente } });
         if (!existe) {
           return reply.status(404).send({ error: "Cliente no encontrado" });
         }
 
-        // Actualizar solo los campos proporcionados (excluir undefined)
+        // Verificar permisos de edición para captadores
+        if (user.roles.includes("captador") && !user.roles.includes("admin")) {
+          // Asegurar comparación numérica
+          if (Number(existe.idVendedor) !== Number(user.sub)) {
+            return reply.status(403).send({ error: "No tienes permiso para editar este cliente" });
+          }
+        }
+
+        // Filtrar campos undefined y sanitizar
         const updateData = Object.fromEntries(
           Object.entries(parsed.data).filter(([_, v]) => v !== undefined)
         );
 
-        // Sanitize input data to prevent XSS
+        // Si el RUT es igual al actual, no lo actualizamos para evitar problemas de unicidad
+        if (updateData.rut === existe.rut) {
+          delete updateData.rut;
+        }
+
         const sanitizedData = sanitizeObject(updateData);
 
         const actualizado = await prisma.cliente.update({
           where: { idCliente },
           data: sanitizedData
         });
+
+        // Registrar auditoría
+        registrarAuditoriaDesdeRequest(req, {
+          tabla: "cliente",
+          operacion: "UPDATE",
+          registroId: actualizado.idCliente,
+          datosAnteriores: existe,
+          datosNuevos: actualizado,
+        }).catch((err) => {
+          req.log.warn({ error: err }, "Error registrando auditoría de actualización");
+        });
         
         return actualizado;
       } catch (e: any) {
-        // Manejar error de RUT duplicado
         if (e?.code === "P2002" && e?.meta?.target?.includes("rut")) {
           return reply.status(409).send({ error: "RUT ya existe" });
         }
-        req.log.error({ error: e }, 'Error updating cliente');
+        req.log.error({ error: e }, 'Error actualizando cliente');
         return reply.status(500).send({ error: "Error interno del servidor" });
       }
     }

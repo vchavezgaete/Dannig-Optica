@@ -214,8 +214,24 @@ export default function Clientes() {
       await buscar();
       setShowEditModal(false);
       setErr(null);
-    } catch {
-      setErr("Error al actualizar cliente");
+    } catch (error: any) {
+      console.error("Error actualizando cliente:", error);
+      const msg = error.response?.data?.error || error.response?.data?.message || "Error al actualizar cliente";
+      
+      // Mostrar detalles de validación si existen
+      if (error.response?.data?.issues) {
+        const issues = error.response.data.issues;
+        if (issues.fieldErrors) {
+          const detalles = Object.entries(issues.fieldErrors)
+            .map(([field, errs]) => `${field}: ${(errs as any[]).join(', ')}`)
+            .join('; ');
+          setErr(`${msg}: ${detalles}`);
+        } else {
+          setErr(`${msg}: Datos inválidos`);
+        }
+      } else {
+        setErr(msg);
+      }
     } finally {
       setLoading(false);
     }

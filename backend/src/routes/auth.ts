@@ -246,7 +246,7 @@ export async function authRoutes(app: FastifyInstance) {
 
       const ok = await bcrypt.compare(body.password, user.hashPassword);
       if (!ok) {
-        req.log.warn({ email: body.email }, 'Invalid password attempt');
+        req.log.warn({ email: body.email }, 'Intento de contraseña inválida');
         return reply.code(401).send({ error: "Credenciales inválidas" });
       }
 
@@ -259,13 +259,13 @@ export async function authRoutes(app: FastifyInstance) {
         // Fallback a process.env si el sistema de env no está inicializado
         JWT_SECRET = process.env.JWT_SECRET || "";
         if (!JWT_SECRET) {
-          req.log.error('JWT_SECRET not configured');
+          req.log.error('JWT_SECRET no configurado');
           return reply.code(500).send({ error: "JWT_SECRET no está configurado correctamente" });
         }
       }
       
       if (JWT_SECRET === "dev_secret") {
-        req.log.error('JWT_SECRET is using insecure default value');
+        req.log.error('JWT_SECRET está usando un valor inseguro por defecto');
         return reply.code(500).send({ error: "JWT_SECRET no está configurado correctamente" });
       }
       

@@ -241,3 +241,8 @@ export async function operativoRoutes(app: FastifyInstance) {
 
 
 
+
+
+
+
+

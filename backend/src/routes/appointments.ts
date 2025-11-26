@@ -37,6 +37,7 @@ export async function appointmentRoutes(app: FastifyInstance) {
     // nuevo recomendado:
     clienteId: z.number().int().optional(),
     idOperativo: z.number().int().optional().nullable(),
+    idMedico: z.number().int().optional().nullable(), // Campo para asignar oftalmólogo
     // string ISO -> Date
     fechaHora: z.string().transform((v) => new Date(v)),
     estado: estadoInputEnum.optional(),
@@ -52,7 +53,7 @@ export async function appointmentRoutes(app: FastifyInstance) {
     if (!parsed.success) {
       return reply.code(400).send({ error: "Datos inválidos", issues: parsed.error.flatten() });
     }
-    const { leadId, clienteId, idOperativo, fechaHora, estado } = parsed.data;
+    const { leadId, clienteId, idOperativo, idMedico, fechaHora, estado } = parsed.data;
     if (isNaN(+fechaHora)) return reply.code(400).send({ error: "fechaHora inválida" });
 
     // compat: si viene leadId, lo usamos como clienteId
@@ -72,14 +73,23 @@ export async function appointmentRoutes(app: FastifyInstance) {
       const operativoExiste = await prisma.operativo.findUnique({ 
         where: { idOperativo } 
       });
-      if (!operativoExiste) {
-        // Si no existe en Operativo, intentamos ver si es un Usuario oftalmólogo
-        // Por ahora, simplemente lo ignoramos y dejamos null
-        // TODO: Considerar cambiar el esquema para que idOperativo referencie Usuario.idUsuario
-        req.log.warn({ idOperativo }, 'idOperativo no encontrado en tabla Operativo, se asignará como null');
-        idOperativoValidado = null;
-      } else {
+      if (operativoExiste) {
         idOperativoValidado = idOperativo;
+      } else {
+        req.log.warn({ idOperativo }, 'idOperativo no encontrado en tabla Operativo');
+      }
+    }
+
+    // Validar que idMedico exista si se proporciona
+    let idMedicoValidado: number | null = null;
+    if (idMedico !== null && idMedico !== undefined) {
+      const medicoExiste = await prisma.usuario.findUnique({ 
+        where: { idUsuario: idMedico } 
+      });
+      if (medicoExiste) {
+        idMedicoValidado = idMedico;
+      } else {
+        req.log.warn({ idMedico }, 'idMedico no encontrado en tabla Usuario');
       }
     }
 
@@ -87,12 +97,20 @@ export async function appointmentRoutes(app: FastifyInstance) {
       data: {
         idCliente,
         idOperativo: idOperativoValidado,
+        idMedico: idMedicoValidado,
         fechaHora,
         estado: mapEstado(estado) as any,
       },
       include: { 
         cliente: true,
         operativo: true,
+        medico: { // Incluir datos del médico en la respuesta
+          select: {
+            idUsuario: true,
+            nombre: true,
+            correo: true
+          }
+        },
         ficha: {
           select: {
             idFicha: true,

@@ -5,7 +5,14 @@ import { api } from "./api";
 type Lead = { idCliente: number; nombre: string; rut: string; telefono?: string };
 type Estado = "Programada" | "Confirmada" | "Cancelada" | "NoShow" | "Atendida";
 type EstadoInput = "pendiente" | "confirmada" | "cancelada" | "no-show";
-type Appointment = { idCita: number; fechaHora: string; estado: Estado; cliente?: Lead; operativo?: { idOperativo: number; nombre: string } };
+type Appointment = { 
+  idCita: number; 
+  fechaHora: string; 
+  estado: Estado; 
+  cliente?: Lead; 
+  operativo?: { idOperativo: number; nombre: string };
+  medico?: { idUsuario: number; nombre: string }; // Tipo actualizado
+};
 type Oftalmologo = { idUsuario: number; nombre: string; correo: string };
 
 const ESTADOS_INPUT: readonly EstadoInput[] = ["pendiente", "confirmada", "cancelada", "no-show"] as const;
@@ -195,7 +202,7 @@ export default function Appointments() {
       };
       
       if (medicoSeleccionado !== "") {
-        payload.idOperativo = medicoSeleccionado;
+        payload.idMedico = Number(medicoSeleccionado);
       }
       
       await api.post("/appointments", payload);
@@ -710,7 +717,7 @@ export default function Appointments() {
                       </div>
                     </td>
                     <td style={{ padding: "1rem" }}>
-                      {a.operativo?.nombre || (
+                      {a.medico?.nombre || a.operativo?.nombre || (
                         <span style={{ color: "var(--texto-sec)", fontStyle: "italic" }}>Sin asignar</span>
                       )}
                     </td>
@@ -868,7 +875,7 @@ export default function Appointments() {
                       </div>
                     </td>
                     <td style={{ padding: "1rem" }}>
-                      {a.operativo?.nombre || (
+                      {a.medico?.nombre || a.operativo?.nombre || (
                         <span style={{ color: "var(--texto-sec)", fontStyle: "italic" }}>Sin asignar</span>
                       )}
                     </td>

@@ -18,6 +18,7 @@ const Clientes = lazy(() => import("./pages/Clientes"));
 const Reportes = lazy(() => import("./pages/Reportes"));
 const Oftalmologo = lazy(() => import("./pages/Oftalmologo"));
 const Ventas = lazy(() => import("./pages/Ventas"));
+const Productos = lazy(() => import("./pages/Productos"));
 const Alertas = lazy(() => import("./pages/Alertas"));
 const Operativos = lazy(() => import("./pages/Operativos"));
 
@@ -113,6 +114,16 @@ const router = createBrowserRouter([
           <Suspense fallback={<LoadingFallback />}>
             <RoleProtectedRoute requiredRole="admin">
               <Ventas />
+            </RoleProtectedRoute>
+          </Suspense>
+        )
+      },
+      { 
+        path: "productos", 
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <RoleProtectedRoute requiredRole="admin">
+              <Productos />
             </RoleProtectedRoute>
           </Suspense>
         )

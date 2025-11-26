@@ -16,6 +16,7 @@ model Cliente {
   direccion     String?  @db.VarChar(150)
   sector        String?  @db.VarChar(80)
   fechaCreacion DateTime @default(now()) @map("fecha_creacion") @db.DateTime(0)
+  fechaActualizacion DateTime @default(now()) @updatedAt @map("fecha_actualizacion") @db.DateTime(0)
   idVendedor    Int?     @map("id_vendedor")
   vendedor      Usuario? @relation(fields: [idVendedor], references: [idUsuario], onDelete: NoAction, map: "fk_cliente_vendedor")
   alertas       Alerta[]
@@ -45,6 +46,7 @@ model Usuario {
   activo           Int          @default(1) @db.TinyInt
   roles            UsuarioRol[]
   clientesCaptados Cliente[]
+  citasAsignadas   Cita[]
   auditorias       Auditoria[]
 
   @@map("usuario")
@@ -73,14 +75,17 @@ model Cita {
   idCita      Int           @id @default(autoincrement()) @map("id_cita")
   idCliente   Int           @map("id_cliente")
   idOperativo Int?          @map("id_operativo")
+  idMedico    Int?          @map("id_medico")
   fechaHora   DateTime      @map("fecha_hora") @db.DateTime(0)
   estado      CitaEstado
   cliente     Cliente       @relation(fields: [idCliente], references: [idCliente], onDelete: NoAction, map: "fk_cita_cliente")
   operativo   Operativo?    @relation(fields: [idOperativo], references: [idOperativo], onDelete: NoAction, map: "fk_cita_operativo")
+  medico      Usuario?      @relation(fields: [idMedico], references: [idUsuario], onDelete: NoAction, map: "fk_cita_medico")
   ficha       FichaClinica?
 
   @@index([idCliente, fechaHora], map: "ix_cita_cliente_fecha")
   @@index([idOperativo, fechaHora], map: "ix_cita_operativo_fecha")
+  @@index([idMedico], map: "fk_cita_medico")
   @@map("cita")
 }
 

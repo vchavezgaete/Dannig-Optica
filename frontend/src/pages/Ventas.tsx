@@ -198,7 +198,7 @@ export default function Ventas() {
         //setErr("No hay productos disponibles. Ejecuta el script 'npm run generate:products' en el backend para generar productos de ejemplo.");
       }
     } catch (error: any) {
-      console.error("Error loading data:", error);
+      console.error("Error cargando datos:", error);
       const errorMessage = error.response?.data?.error || error.message || "Error al cargar datos";
       setErr(errorMessage);
       
@@ -356,7 +356,7 @@ export default function Ventas() {
         }))
       };
 
-      console.log("Enviando venta:", ventaData); // Debug
+      console.log("Enviando venta:", ventaData); // Depuración
 
       const res = await api.post<Venta>("/ventas", ventaData);
       setMsg(`Venta creada exitosamente. Total: ${'$'}${Number(res.data.total).toLocaleString()}`);

@@ -1,13 +1,13 @@
-// Script to seed demo data for reports
+// Script para cargar datos de prueba para demostración y reportes
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("[INFO] Starting database seeding...");
+  console.log("[INFO] Iniciando carga de datos de prueba...");
 
-  // 1. Create Roles
+  // 1. Crear Roles
   const roles = ["Administrador", "Vendedor", "Captador", "Oftalmólogo", "Gerente"];
   const roleMap = new Map();
 
@@ -18,15 +18,15 @@ async function main() {
       create: { nombre: roleName },
     });
     roleMap.set(roleName, role.idRol);
-    console.log(`[OK] Role ensured: ${roleName}`);
+    console.log(`[OK] Rol asegurado: ${roleName}`);
   }
 
-  // 2. Create Special Users from Env Vars (or defaults)
-  // Default password for everyone if not specified
+  // 2. Crear Usuarios Especiales desde Variables de Entorno (o valores por defecto)
+  // Contraseña por defecto si no se especifica
   const defaultPassword = process.env.DEFAULT_PASSWORD || "dannig123";
   const hashedDefaultPassword = await bcrypt.hash(defaultPassword, 10);
 
-  // Helper to create user with role
+  // Función auxiliar para crear usuario con rol
   const createUserWithRole = async (name: string, email: string, password: string | undefined, roleName: string) => {
     if (!email) return;
     
@@ -36,8 +36,8 @@ async function main() {
       where: { correo: email },
       update: {
         nombre: name,
-        // Don't update password if user already exists to prevent lockout, 
-        // unless you want to force reset it. Here we assume safety first.
+        // No actualizamos contraseña si el usuario ya existe para evitar bloqueos,
+        // a menos que se fuerce un reset manual. Asumimos seguridad primero.
       },
       create: {
         nombre: name,
@@ -62,11 +62,11 @@ async function main() {
           idRol: roleId,
         },
       });
-      console.log(`[OK] User ${name} (${roleName}) ensured.`);
+      console.log(`[OK] Usuario ${name} (${roleName}) asegurado.`);
     }
   };
 
-  // Admin
+  // Administrador
   await createUserWithRole(
     process.env.ADMIN_NAME || "Administrador Principal",
     process.env.ADMIN_EMAIL || "admin@dannig.cl",
@@ -90,7 +90,7 @@ async function main() {
     "Oftalmólogo"
   );
 
-  // 3. Create demo vendors (Vendedores)
+  // 3. Crear Vendedores de demostración
   const hashedPassword = await bcrypt.hash("demo123", 10);
   
   const vendors = [];
@@ -113,7 +113,7 @@ async function main() {
       },
     });
     
-    // Assign Vendedor role
+    // Asignar rol Vendedor
     await prisma.usuarioRol.upsert({
         where: {
           idUsuario_idRol: {
@@ -129,10 +129,10 @@ async function main() {
       });
 
     vendors.push(vendor);
-    console.log(`[OK] Created vendor: ${vendor.nombre}`);
+    console.log(`[OK] Vendedor creado: ${vendor.nombre}`);
   }
 
-  // 4. Create demo clients
+  // 4. Crear Clientes de demostración
   const clientNames = [
     { rut: "12345678-9", nombre: "Pedro Silva", sector: "Maipú" },
     { rut: "23456789-0", nombre: "Laura Castro", sector: "Santiago Centro" },
@@ -164,14 +164,15 @@ async function main() {
         direccion: `Calle Demo ${i + 1}`,
         sector: clientData.sector,
         idVendedor: vendors[vendorIndex].idUsuario,
-        fechaCreacion: new Date(Date.now() - Math.random() * 180 * 24 * 60 * 60 * 1000), // Random date within last 6 months
+        // Fecha aleatoria dentro de los últimos 6 meses
+        fechaCreacion: new Date(Date.now() - Math.random() * 180 * 24 * 60 * 60 * 1000), 
       },
     });
     clients.push(client);
-    console.log(`[OK] Created client: ${client.nombre} (Vendor: ${vendors[vendorIndex].nombre})`);
+    console.log(`[OK] Cliente creado: ${client.nombre} (Vendedor: ${vendors[vendorIndex].nombre})`);
   }
 
-  // Create demo products
+  // Crear Productos de demostración
   const products = [
     { codigo: "LENT-001", nombre: "Lentes Monofocales", precio: 45000, tipo: "Lentes" },
     { codigo: "LENT-002", nombre: "Lentes Bifocales", precio: 65000, tipo: "Lentes" },
@@ -191,15 +192,15 @@ async function main() {
       create: productData,
     });
     createdProducts.push(product);
-    console.log(`[OK] Created product: ${product.nombre}`);
+    console.log(`[OK] Producto creado: ${product.nombre}`);
   }
 
-  // Create demo sales
+  // Crear Ventas de demostración
   for (let i = 0; i < 30; i++) {
     const randomClient = clients[Math.floor(Math.random() * clients.length)];
-    const numItems = Math.floor(Math.random() * 3) + 1; // 1-3 items per sale
+    const numItems = Math.floor(Math.random() * 3) + 1; // 1-3 items por venta
     
-    // Select random products for this sale
+    // Seleccionar productos aleatorios para esta venta
     const saleProducts = [];
     const usedIndices = new Set();
     for (let j = 0; j < numItems; j++) {
@@ -211,13 +212,13 @@ async function main() {
       saleProducts.push(createdProducts[productIndex]);
     }
 
-    // Calculate total
+    // Calcular total
     let total = 0;
     saleProducts.forEach(product => {
       total += Number(product.precio);
     });
 
-    // Create sale with random date within last 6 months
+    // Crear venta con fecha aleatoria en los últimos 6 meses
     const sale = await prisma.venta.create({
       data: {
         idCliente: randomClient.idCliente,
@@ -226,7 +227,7 @@ async function main() {
       },
     });
 
-    // Create sale items
+    // Crear items de venta
     for (const product of saleProducts) {
       await prisma.itemVenta.create({
         data: {
@@ -238,29 +239,28 @@ async function main() {
       });
     }
 
-    console.log(`[OK] Created sale #${sale.idVenta} for ${randomClient.nombre} - Total: $${total}`);
+    console.log(`[OK] Venta #${sale.idVenta} creada para ${randomClient.nombre} - Total: $${total}`);
   }
 
-  console.log("\n🎉 Database seeding completed successfully!");
-  console.log("\n[INFO] Summary:");
-  console.log(`   - Users Admin, Captador, Oftalmólogo ensured`);
-  console.log(`   - ${vendors.length} vendors created`);
-  console.log(`   - ${clients.length} clients created`);
-  console.log(`   - ${createdProducts.length} products created`);
-  console.log(`   - 30 sales created with items`);
-  console.log("\n[INFO] Credentials:");
+  console.log("\n🎉 Carga de datos completada exitosamente!");
+  console.log("\n[INFO] Resumen:");
+  console.log(`   - Usuarios Admin, Captador, Oftalmólogo asegurados`);
+  console.log(`   - ${vendors.length} vendedores creados`);
+  console.log(`   - ${clients.length} clientes creados`);
+  console.log(`   - ${createdProducts.length} productos creados`);
+  console.log(`   - 30 ventas creadas con items`);
+  console.log("\n[INFO] Credenciales:");
   console.log(`   Admin: ${process.env.ADMIN_EMAIL || "admin@dannig.cl"}`);
   console.log(`   Captador: ${process.env.CAPTADOR_EMAIL || "captador@dannig.cl"}`);
   console.log(`   Oftalmólogo: ${process.env.OFTALMOLOGO_EMAIL || "oftalmologo@dannig.cl"}`);
-  console.log("   Vendors: demo123");
+  console.log("   Vendedores: demo123");
 }
 
 main()
   .catch((e) => {
-    console.error("[ERROR] Error seeding database:", e);
+    console.error("[ERROR] Error cargando datos:", e);
     process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();
   });
-
