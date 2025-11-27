@@ -297,7 +297,7 @@ export async function clienteRoutes(app: FastifyInstance) {
             }
           }
         });
-
+        
         return {
           cliente,
           citas,
@@ -311,6 +311,69 @@ export async function clienteRoutes(app: FastifyInstance) {
         };
       } catch (e: any) {
         return reply.status(500).send({ error: e.message });
+      }
+    }
+  );
+
+  // DELETE /clientes/:id - Eliminar cliente (Solo admin)
+  app.delete("/:id", 
+    { preHandler: (app as any).authorize(["admin"]) },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      const idCliente = Number(id);
+
+      if (isNaN(idCliente)) {
+        return reply.status(400).send({ error: "ID inválido" });
+      }
+
+      try {
+        // Verificar dependencias antes de eliminar
+        const cliente = await prisma.cliente.findUnique({
+          where: { idCliente },
+          include: {
+            _count: {
+              select: {
+                citas: true,
+                ventas: true
+              }
+            }
+          }
+        });
+
+        if (!cliente) {
+          return reply.status(404).send({ error: "Cliente no encontrado" });
+        }
+
+        // Si tiene citas o ventas, no permitir eliminar
+        if (cliente._count.citas > 0 || cliente._count.ventas > 0) {
+          return reply.status(409).send({ 
+            error: "No se puede eliminar el cliente porque tiene registros asociados (citas o ventas).",
+            detalles: {
+              citas: cliente._count.citas,
+              ventas: cliente._count.ventas
+            }
+          });
+        }
+
+        const eliminado = await prisma.cliente.delete({
+          where: { idCliente }
+        });
+
+        // Registrar auditoría
+        registrarAuditoriaDesdeRequest(req, {
+          tabla: "cliente",
+          operacion: "DELETE",
+          registroId: idCliente,
+          datosAnteriores: cliente,
+        }).catch((err) => {
+          req.log.warn({ error: err }, "Error registrando auditoría de eliminación");
+        });
+
+        return reply.code(204).send();
+
+      } catch (e: any) {
+        req.log.error({ error: e }, 'Error eliminando cliente');
+        return reply.status(500).send({ error: "Error interno del servidor" });
       }
     }
   );

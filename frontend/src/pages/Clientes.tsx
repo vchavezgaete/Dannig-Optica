@@ -237,6 +237,45 @@ export default function Clientes() {
     }
   }
 
+  async function eliminarCliente(idCliente: number, nombre: string) {
+    if (!window.confirm(`¿Estás seguro de que deseas eliminar al cliente "${nombre}"?\n\nEsta acción no se puede deshacer.`)) {
+      return;
+    }
+    
+    setLoading(true);
+    setErr(null);
+    try {
+      await api.delete(`/clientes/${idCliente}`);
+      
+      // Si estamos en la vista de detalle, volver a la lista o limpiar
+      if (cliente && cliente.idCliente === idCliente) {
+        setCliente(null);
+        setActiveView('lista');
+        if (rut) setRut("");
+      }
+      
+      // Recargar lista
+      cargarListaClientes();
+      alert(`Cliente "${nombre}" eliminado correctamente.`);
+      
+    } catch (error: any) {
+      console.error("Error eliminando cliente:", error);
+      const msg = error.response?.data?.error || error.response?.data?.message || "Error al eliminar cliente";
+      
+      if (error.response?.status === 409 && error.response?.data?.detalles) {
+         const detalles = error.response.data.detalles;
+         const razon = [];
+         if (detalles.citas > 0) razon.push(`${detalles.citas} citas`);
+         if (detalles.ventas > 0) razon.push(`${detalles.ventas} ventas`);
+         setErr(`${msg} (Tiene ${razon.join(" y ")})`);
+      } else {
+         setErr(msg);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function getEstadoLabel(estado: string) {
     switch (estado) {
       case "Programada": return "Pendiente";
@@ -513,20 +552,30 @@ export default function Clientes() {
                               👁️ Ver
                             </button>
                             {(isAdmin || isOftalmologo) && (
-                              <button
-                                className="btn btn--primary btn--small"
-                                onClick={() => {
-                                  navigate(`/appointments?clienteId=${c.idCliente}&clienteNombre=${encodeURIComponent(c.nombre)}`);
-                                }}
-                                title="Agendar cita"
-                              >
-                                📅 Cita
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                            <button
+                              className="btn btn--primary btn--small"
+                              onClick={() => {
+                                navigate(`/appointments?clienteId=${c.idCliente}&clienteNombre=${encodeURIComponent(c.nombre)}`);
+                              }}
+                              title="Agendar cita"
+                            >
+                              📅 Cita
+                            </button>
+                          )}
+                          {isAdmin && (
+                            <button
+                              className="btn btn--secondary btn--small"
+                              style={{ background: "#fee2e2", color: "#991b1b", border: "1px solid #fecaca" }}
+                              onClick={() => eliminarCliente(c.idCliente, c.nombre)}
+                              title="Eliminar cliente"
+                            >
+                              🗑️
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
                   </tbody>
                 </table>
               </div>
@@ -631,6 +680,15 @@ export default function Clientes() {
                 onClick={abrirEditarModal}
               >
                 📝 Editar Información
+              </button>
+            )}
+            {isAdmin && (
+              <button 
+                className="btn btn--secondary btn--small"
+                style={{ background: "#fee2e2", color: "#991b1b", border: "1px solid #fecaca" }}
+                onClick={() => eliminarCliente(cliente.idCliente, cliente.nombre)}
+              >
+                🗑️ Eliminar Cliente
               </button>
             )}
             {(isAdmin || isOftalmologo) && (
