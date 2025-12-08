@@ -238,10 +238,55 @@ export async function authRoutes(app: FastifyInstance) {
         return reply.code(400).send({ error: "email y password son requeridos" });
       }
 
-      const user = await prisma.usuario.findUnique({
-        where: { correo: body.email },
-        include: { roles: { include: { rol: true } } },
-      });
+      let user: any;
+      try {
+        // Intentar consulta con el schema nuevo primero
+        user = await prisma.usuario.findUnique({
+          where: { correo: body.email },
+          include: { roles: { include: { rol: true } } },
+        });
+      } catch (dbError: any) {
+        req.log.error({ 
+          error: dbError, 
+          message: dbError.message,
+          code: dbError.code,
+          email: body.email 
+        }, 'Error consultando usuario en base de datos');
+        
+        // Si el error es por schema incompatible, intentar consulta raw
+        if (dbError.code === 'P2021' || dbError.message?.includes('Unknown column') || dbError.message?.includes('does not exist')) {
+          try {
+            // Consulta raw como fallback para schema antiguo
+            const usuariosRaw = await prisma.$queryRaw<Array<any>>`
+              SELECT u.id_usuario as idUsuario, u.correo, u.hash_password as hashPassword, u.activo,
+                     u.nombre, u.nombres, u.apellido_paterno as apellidoPaterno, u.apellido_materno as apellidoMaterno
+              FROM usuario u
+              WHERE u.correo = ${body.email} AND u.activo = 1
+            `;
+            
+            if (usuariosRaw.length === 0) {
+              return reply.code(401).send({ error: "Credenciales inválidas" });
+            }
+            
+            user = usuariosRaw[0];
+            
+            // Obtener roles por separado
+            const rolesRaw = await prisma.$queryRaw<Array<any>>`
+              SELECT r.nombre
+              FROM usuario_rol ur
+              JOIN rol r ON ur.id_rol = r.id_rol
+              WHERE ur.id_usuario = ${user.idUsuario}
+            `;
+            
+            user.roles = rolesRaw.map((r: any) => ({ rol: { nombre: r.nombre } }));
+          } catch (rawError: any) {
+            req.log.error({ error: rawError }, 'Error en consulta raw de fallback');
+            return reply.status(500).send({ error: "Error de conexión con la base de datos" });
+          }
+        } else {
+          return reply.status(500).send({ error: "Error de conexión con la base de datos" });
+        }
+      }
 
       if (!user || user.activo !== 1) {
         return reply.code(401).send({ error: "Credenciales inválidas" });
@@ -272,11 +317,22 @@ export async function authRoutes(app: FastifyInstance) {
         return reply.code(500).send({ error: "JWT_SECRET no está configurado correctamente" });
       }
       
+      // Obtener roles de forma segura
+      let roles: string[] = [];
+      try {
+        if (user.roles && Array.isArray(user.roles)) {
+          roles = user.roles.map((r: any) => r.rol?.nombre || r.rol?.name || '').filter((r: string) => r !== '');
+        }
+      } catch (rolesError: any) {
+        req.log.warn({ error: rolesError }, 'Error obteniendo roles del usuario');
+        roles = [];
+      }
+      
       const token = jwt.sign(
         {
           sub: user.idUsuario,
           correo: user.correo,
-          roles: user.roles.map(r => r.rol.nombre),
+          roles: roles,
         },
         JWT_SECRET,
         { expiresIn: "8h" }
@@ -284,17 +340,20 @@ export async function authRoutes(app: FastifyInstance) {
 
       // Construir nombre completo - manejar tanto el formato antiguo como el nuevo
       let nombreCompleto: string;
-      const usuario = user as any; // Cast temporal para compatibilidad
-      
-      if (usuario.nombres) {
-        // Formato nuevo: nombres, apellidoPaterno, apellidoMaterno
-        nombreCompleto = `${usuario.nombres} ${usuario.apellidoPaterno || ''}${usuario.apellidoMaterno ? ' ' + usuario.apellidoMaterno : ''}`.trim();
-      } else if (usuario.nombre) {
-        // Formato antiguo: nombre (compatibilidad temporal)
-        nombreCompleto = usuario.nombre;
-      } else {
-        // Fallback: usar correo si no hay nombre
-        nombreCompleto = user.correo.split('@')[0];
+      try {
+        if (user.nombres) {
+          // Formato nuevo: nombres, apellidoPaterno, apellidoMaterno
+          nombreCompleto = `${user.nombres || ''} ${user.apellidoPaterno || ''}${user.apellidoMaterno ? ' ' + user.apellidoMaterno : ''}`.trim();
+        } else if (user.nombre) {
+          // Formato antiguo: nombre (compatibilidad temporal)
+          nombreCompleto = user.nombre;
+        } else {
+          // Fallback: usar correo si no hay nombre
+          nombreCompleto = user.correo.split('@')[0] || 'Usuario';
+        }
+      } catch (nameError: any) {
+        req.log.warn({ error: nameError }, 'Error construyendo nombre completo');
+        nombreCompleto = user.correo.split('@')[0] || 'Usuario';
       }
 
       return {
@@ -303,12 +362,20 @@ export async function authRoutes(app: FastifyInstance) {
           id: user.idUsuario,
           nombre: nombreCompleto,
           correo: user.correo,
-          roles: user.roles.map(r => r.rol.nombre),
+          roles: roles,
         },
       };
     } catch (err: any) {
-      req.log.error(err);
-      return reply.status(500).send({ error: "Error en login: " + err.message });
+      req.log.error({ 
+        error: err, 
+        message: err.message, 
+        stack: err.stack,
+        name: err.name 
+      }, 'Error en login');
+      return reply.status(500).send({ 
+        error: "Error en login", 
+        message: process.env.NODE_ENV === 'production' ? 'Error interno del servidor' : err.message 
+      });
     }
   });
 
