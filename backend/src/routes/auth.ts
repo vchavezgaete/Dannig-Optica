@@ -120,9 +120,10 @@ export async function authRoutes(app: FastifyInstance) {
       const adminHash = await bcrypt.hash(adminPassword, 10);
       const adminUser = await prisma.usuario.upsert({
         where: { correo: adminEmail },
-        update: { nombre: adminName, hashPassword: adminHash, activo: 1 },
+        update: { nombres: adminName, apellidoPaterno: "Admin", hashPassword: adminHash, activo: 1 },
         create: {
-          nombre: adminName,
+          nombres: adminName,
+          apellidoPaterno: "Admin",
           correo: adminEmail,
           hashPassword: adminHash,
           activo: 1,
@@ -133,9 +134,10 @@ export async function authRoutes(app: FastifyInstance) {
       const captadorHash = await bcrypt.hash(captadorPassword, 10);
       const captadorUser = await prisma.usuario.upsert({
         where: { correo: captadorEmail },
-        update: { nombre: captadorName, hashPassword: captadorHash, activo: 1 },
+        update: { nombres: captadorName, apellidoPaterno: "Captador", hashPassword: captadorHash, activo: 1 },
         create: {
-          nombre: captadorName,
+          nombres: captadorName,
+          apellidoPaterno: "Captador",
           correo: captadorEmail,
           hashPassword: captadorHash,
           activo: 1,
@@ -146,9 +148,10 @@ export async function authRoutes(app: FastifyInstance) {
       const oftalmologoHash = await bcrypt.hash(oftalmologoPassword, 10);
       const oftalmologoUser = await prisma.usuario.upsert({
         where: { correo: oftalmologoEmail },
-        update: { nombre: oftalmologoName, hashPassword: oftalmologoHash, activo: 1 },
+        update: { nombres: oftalmologoName, apellidoPaterno: "Oftalmólogo", hashPassword: oftalmologoHash, activo: 1 },
         create: {
-          nombre: oftalmologoName,
+          nombres: oftalmologoName,
+          apellidoPaterno: "Oftalmólogo",
           correo: oftalmologoEmail,
           hashPassword: oftalmologoHash,
           activo: 1,
@@ -279,11 +282,14 @@ export async function authRoutes(app: FastifyInstance) {
         { expiresIn: "8h" }
       );
 
+      // Construir nombre completo
+      const nombreCompleto = `${user.nombres} ${user.apellidoPaterno}${user.apellidoMaterno ? ' ' + user.apellidoMaterno : ''}`;
+
       return {
         token,
         user: {
           id: user.idUsuario,
-          nombre: user.nombre,
+          nombre: nombreCompleto,
           correo: user.correo,
           roles: user.roles.map(r => r.rol.nombre),
         },
@@ -307,7 +313,7 @@ export async function authRoutes(app: FastifyInstance) {
       }
 
       // Obtener todos los usuarios con rol oftalmólogo
-      const usuariosOftalmologos = await prisma.usuario.findMany({
+      const listaOftalmologos = await prisma.usuario.findMany({
         where: {
           activo: 1,
           roles: {
@@ -318,15 +324,24 @@ export async function authRoutes(app: FastifyInstance) {
         },
         select: {
           idUsuario: true,
-          nombre: true,
+          nombres: true,
+          apellidoPaterno: true,
+          apellidoMaterno: true,
           correo: true,
         },
         orderBy: {
-          nombre: "asc",
+          nombres: "asc",
         },
       });
 
-      return reply.code(200).send(usuariosOftalmologos);
+      // Formatear respuesta con nombre completo
+      const oftalmologosFormateados = listaOftalmologos.map((oftalmologo) => ({
+        idUsuario: oftalmologo.idUsuario,
+        nombre: `${oftalmologo.nombres} ${oftalmologo.apellidoPaterno}${oftalmologo.apellidoMaterno ? ' ' + oftalmologo.apellidoMaterno : ''}`,
+        correo: oftalmologo.correo,
+      }));
+
+      return reply.code(200).send(oftalmologosFormateados);
     } catch (err: any) {
       req.log.error(err);
       return reply.status(500).send({ error: "Error obteniendo oftalmólogos: " + err.message });
