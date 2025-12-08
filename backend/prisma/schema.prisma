@@ -8,22 +8,31 @@ datasource db {
 }
 
 model Cliente {
-  idCliente     Int      @id @default(autoincrement()) @map("id_cliente")
-  rut           String   @unique(map: "uq_cliente_rut") @db.VarChar(12)
-  nombre        String   @db.VarChar(100)
-  telefono      String?  @db.VarChar(15)
-  correo        String?  @db.VarChar(120)
-  direccion     String?  @db.VarChar(150)
-  sector        String?  @db.VarChar(80)
-  fechaCreacion DateTime @default(now()) @map("fecha_creacion") @db.DateTime(0)
+  idCliente       Int      @id @default(autoincrement()) @map("id_cliente")
+  rut             String   @unique(map: "uq_cliente_rut") @db.VarChar(12)
+  nombres         String   @db.VarChar(100)
+  apellidoPaterno String   @map("apellido_paterno") @db.VarChar(50)
+  apellidoMaterno String?  @map("apellido_materno") @db.VarChar(50)
+  telefono        String?  @db.VarChar(15)
+  correo          String?  @db.VarChar(120)
+  calle           String?  @db.VarChar(100)
+  numero          String?  @db.VarChar(20)
+  departamento    String?  @db.VarChar(20)
+  idSector        Int?     @map("id_sector")
+  sector          Sector?  @relation(fields: [idSector], references: [idSector], onDelete: SetNull, map: "fk_cliente_sector")
+  idComuna        Int?     @map("id_comuna")
+  comuna          Comuna?  @relation(fields: [idComuna], references: [idComuna], onDelete: NoAction, map: "fk_cliente_comuna")
+  fechaCreacion   DateTime @default(now()) @map("fecha_creacion") @db.DateTime(0)
   fechaActualizacion DateTime @default(now()) @updatedAt @map("fecha_actualizacion") @db.DateTime(0)
-  idVendedor    Int?     @map("id_vendedor")
-  vendedor      Usuario? @relation(fields: [idVendedor], references: [idUsuario], onDelete: NoAction, map: "fk_cliente_vendedor")
-  alertas       Alerta[]
-  citas         Cita[]
-  ventas        Venta[]
+  idVendedor      Int?     @map("id_vendedor")
+  vendedor        Usuario? @relation(fields: [idVendedor], references: [idUsuario], onDelete: NoAction, map: "fk_cliente_vendedor")
+  alertas         Alerta[]
+  citas           Cita[]
+  ventas          Venta[]
 
   @@index([idVendedor], map: "fk_cliente_vendedor")
+  @@index([idComuna], map: "fk_cliente_comuna")
+  @@index([idSector], map: "fk_cliente_sector")
   @@map("cliente")
 }
 
@@ -33,14 +42,19 @@ model Operativo {
   fecha       DateTime @db.Date
   lugar       String?  @db.VarChar(150)
   cupos       Int?
+  idComuna    Int?     @map("id_comuna")
+  comuna      Comuna?  @relation(fields: [idComuna], references: [idComuna], onDelete: SetNull, map: "fk_operativo_comuna")
   citas       Cita[]
 
+  @@index([idComuna], map: "fk_operativo_comuna")
   @@map("operativo")
 }
 
 model Usuario {
   idUsuario        Int          @id @default(autoincrement()) @map("id_usuario")
-  nombre           String       @db.VarChar(100)
+  nombres          String       @db.VarChar(100)
+  apellidoPaterno  String       @map("apellido_paterno") @db.VarChar(50)
+  apellidoMaterno  String?      @map("apellido_materno") @db.VarChar(50)
   correo           String       @unique(map: "uq_usuario_correo") @db.VarChar(120)
   hashPassword     String       @map("hash_password") @db.VarChar(255)
   activo           Int          @default(1) @db.TinyInt
@@ -92,14 +106,34 @@ model Cita {
 model FichaClinica {
   idFicha                    Int      @id @default(autoincrement()) @map("id_ficha")
   idCita                     Int      @unique(map: "uq_ficha_cita") @map("id_cita")
-  antecedentesGenerales      String?  @map("antecedentes_generales") @db.Text
-  antecedentesOftalmologicos String?  @map("antecedentes_oftalmologicos") @db.Text
   observaciones              String?  @db.Text
   fechaRegistro              DateTime @default(now()) @map("fecha_registro") @db.DateTime(0)
   cita                       Cita     @relation(fields: [idCita], references: [idCita], onDelete: Cascade, map: "fk_ficha_cita")
   recetas                    Receta[]
+  antecedentes               FichaAntecedente[]
 
   @@map("ficha_clinica")
+}
+
+model Antecedente {
+  idAntecedente Int      @id @default(autoincrement()) @map("id_antecedente")
+  nombre        String   @unique(map: "uq_antecedente_nombre") @db.VarChar(100)
+  tipo          String?  @db.VarChar(50) // 'General', 'Oftalmologico'
+  fichas        FichaAntecedente[]
+
+  @@map("antecedente")
+}
+
+model FichaAntecedente {
+  idFicha       Int          @map("id_ficha")
+  idAntecedente Int          @map("id_antecedente")
+  observacion   String?      @db.VarChar(255)
+  ficha         FichaClinica @relation(fields: [idFicha], references: [idFicha], onDelete: Cascade, map: "fk_fa_ficha")
+  antecedente   Antecedente  @relation(fields: [idAntecedente], references: [idAntecedente], onDelete: Cascade, map: "fk_fa_antecedente")
+
+  @@id([idFicha, idAntecedente])
+  @@index([idAntecedente], map: "fk_fa_antecedente")
+  @@map("ficha_antecedente")
 }
 
 model Receta {
@@ -123,14 +157,24 @@ model Receta {
 }
 
 model Producto {
-  idProducto Int         @id @default(autoincrement()) @map("id_producto")
-  codigo     String      @unique(map: "uq_producto_codigo") @db.VarChar(50)
-  nombre     String      @db.VarChar(120)
-  precio     Decimal     @db.Decimal(10, 2)
-  tipo       String?     @db.VarChar(30)
-  items      ItemVenta[]
+  idProducto  Int                @id @default(autoincrement()) @map("id_producto")
+  codigo      String             @unique(map: "uq_producto_codigo") @db.VarChar(50)
+  nombre      String             @db.VarChar(120)
+  precio      Decimal            @db.Decimal(10, 2)
+  idCategoria Int?               @map("id_categoria")
+  categoria   CategoriaProducto? @relation(fields: [idCategoria], references: [idCategoria], onDelete: SetNull, map: "fk_producto_categoria")
+  items       ItemVenta[]
 
+  @@index([idCategoria], map: "fk_producto_categoria")
   @@map("producto")
+}
+
+model CategoriaProducto {
+  idCategoria Int        @id @default(autoincrement()) @map("id_categoria")
+  nombre      String     @unique(map: "uq_categoria_nombre") @db.VarChar(50)
+  productos   Producto[]
+
+  @@map("categoria_producto")
 }
 
 model Venta {
@@ -188,6 +232,39 @@ model Alerta {
   @@index([fechaProgramada, enviado], map: "ix_alerta_programada")
   @@index([idCliente], map: "fk_alerta_cliente")
   @@map("alerta")
+}
+
+model Region {
+  idRegion Int      @id @default(autoincrement()) @map("id_region")
+  nombre   String   @unique(map: "uq_region_nombre") @db.VarChar(100)
+  ordinal  String?  @db.VarChar(10) 
+  comunas  Comuna[]
+
+  @@map("region")
+}
+
+model Comuna {
+  idComuna   Int         @id @default(autoincrement()) @map("id_comuna")
+  nombre     String      @unique(map: "uq_comuna_nombre") @db.VarChar(100)
+  idRegion   Int         @map("id_region")
+  region     Region      @relation(fields: [idRegion], references: [idRegion], onDelete: NoAction, map: "fk_comuna_region")
+  sectores   Sector[]
+  clientes   Cliente[]
+  operativos Operativo[]
+
+  @@index([idRegion], map: "fk_comuna_region")
+  @@map("comuna")
+}
+
+model Sector {
+  idSector  Int      @id @default(autoincrement()) @map("id_sector")
+  nombre    String   @db.VarChar(100)
+  idComuna  Int      @map("id_comuna")
+  comuna    Comuna   @relation(fields: [idComuna], references: [idComuna], onDelete: Cascade, map: "fk_sector_comuna")
+  clientes  Cliente[]
+
+  @@index([idComuna], map: "fk_sector_comuna")
+  @@map("sector")
 }
 
 enum CitaEstado {
