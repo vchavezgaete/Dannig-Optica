@@ -123,6 +123,10 @@ export default function Layout() {
           {/* Módulos administrativos - visibles solo para admin */}
           {hasRole('admin') && (
             <>
+              <NavLink to="/usuarios" className="nav__link">
+                <span style={{ fontSize: "1.5rem", lineHeight: "1.2", display: "block" }}>👤</span>
+                <span style={{ fontSize: "0.8125rem", fontWeight: "600", lineHeight: "1.2" }}>Usuarios</span>
+              </NavLink>
               <NavLink to="/reportes" className="nav__link">
                 <span style={{ fontSize: "1.5rem", lineHeight: "1.2", display: "block" }}>📊</span>
                 <span style={{ fontSize: "0.8125rem", fontWeight: "600", lineHeight: "1.2" }}>Reportes</span>
