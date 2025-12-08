@@ -8,6 +8,103 @@ const prisma = new PrismaClient();
 
 export async function authRoutes(app: FastifyInstance) {
   /**
+   * POST /auth/fix-admin-role
+   * Endpoint para corregir el rol de admin de un usuario específico
+   * No requiere autenticación - útil para debugging y corrección
+   */
+  app.post("/fix-admin-role", async (req, reply) => {
+    try {
+      const body = req.body as { email?: string };
+      if (!body?.email) {
+        return reply.code(400).send({ error: "email es requerido" });
+      }
+
+      // Buscar usuario
+      const user = await prisma.usuario.findUnique({
+        where: { correo: body.email },
+        include: { roles: { include: { rol: true } } },
+      });
+
+      if (!user) {
+        return reply.code(404).send({ error: "Usuario no encontrado" });
+      }
+
+      // Buscar o crear rol "admin" (en minúsculas)
+      let adminRol = await prisma.rol.findUnique({
+        where: { nombre: "admin" },
+      });
+
+      if (!adminRol) {
+        // Si no existe "admin", buscar "Administrador" y renombrarlo, o crear uno nuevo
+        const adminRolMayus = await prisma.rol.findUnique({
+          where: { nombre: "Administrador" },
+        });
+
+        if (adminRolMayus) {
+          // Renombrar "Administrador" a "admin"
+          adminRol = await prisma.rol.update({
+            where: { idRol: adminRolMayus.idRol },
+            data: { nombre: "admin" },
+          });
+        } else {
+          // Crear rol "admin" nuevo
+          adminRol = await prisma.rol.create({
+            data: { nombre: "admin" },
+          });
+        }
+      }
+
+      // Verificar si el usuario ya tiene el rol admin
+      const tieneAdminRol = user.roles.some(
+        (ur) => ur.rol.nombre.toLowerCase() === "admin" || ur.rol.nombre.toLowerCase() === "administrador"
+      );
+
+      if (!tieneAdminRol) {
+        // Asignar rol admin
+        await prisma.usuarioRol.upsert({
+          where: {
+            idUsuario_idRol: {
+              idUsuario: user.idUsuario,
+              idRol: adminRol.idRol,
+            },
+          },
+          update: {},
+          create: {
+            idUsuario: user.idUsuario,
+            idRol: adminRol.idRol,
+          },
+        });
+
+        return {
+          ok: true,
+          message: `Rol 'admin' asignado correctamente a ${body.email}`,
+          usuario: {
+            id: user.idUsuario,
+            correo: user.correo,
+            roles: ["admin"],
+          },
+        };
+      } else {
+        return {
+          ok: true,
+          message: `El usuario ${body.email} ya tiene rol de administrador`,
+          usuario: {
+            id: user.idUsuario,
+            correo: user.correo,
+            roles: user.roles.map((r) => r.rol.nombre),
+          },
+        };
+      }
+    } catch (err: any) {
+      req.log.error(err);
+      return reply.status(500).send({ 
+        error: "Error corrigiendo rol de admin", 
+        message: err.message 
+      });
+    }
+  });
+
+  /**
    * GET /auth/diagnostico
    * Endpoint de diagnóstico para verificar configuración de autenticación
    * No requiere autenticación - útil para debugging
@@ -24,7 +121,9 @@ export async function authRoutes(app: FastifyInstance) {
         usuarios: {
           total: 0,
           activos: 0,
-          error: "" as string | undefined
+          error: "" as string | undefined,
+          adminRoles: [] as string[],
+          adminTieneRol: false
         },
         servidor: {
           estado: "running",
