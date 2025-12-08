@@ -24,7 +24,9 @@ export async function leadRoutes(app: FastifyInstance) {
 
       if (q && q.trim()) {
         where.OR = [
-          { nombre: { contains: q } },
+          { nombres: { contains: q } },
+          { apellidoPaterno: { contains: q } },
+          { apellidoMaterno: { contains: q } },
           { rut: { contains: q } },
           { telefono: { contains: q } },
           { correo: { contains: q } },
@@ -70,6 +72,12 @@ export async function leadRoutes(app: FastifyInstance) {
         return reply.code(400).send({ error: "documento (RUT) es requerido" });
       }
 
+      // Dividir nombre en partes
+      const partesNombre = nombre.trim().split(/\s+/);
+      const nombres = partesNombre[0] || "";
+      const apellidoPaterno = partesNombre[1] || "";
+      const apellidoMaterno = partesNombre.slice(2).join(" ") || null;
+
       let telefono: string | null = null;
       let correo: string | null = null;
       if (contacto) {
@@ -82,11 +90,13 @@ export async function leadRoutes(app: FastifyInstance) {
         const nuevo = await prisma.cliente.create({
           data: {
             rut: documento,
-            nombre,
+            nombres,
+            apellidoPaterno,
+            apellidoMaterno,
             telefono,
             correo,
-            direccion: direccion ?? null,
-            sector: sector ?? null,
+            calle: direccion ?? null,
+            idSector: sector ? parseInt(sector) || null : null,
             idVendedor: user.sub, // Asignar automáticamente el usuario que crea el lead
           },
         });

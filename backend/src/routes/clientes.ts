@@ -21,9 +21,16 @@ const createClienteSchema = z.object({
       (rut) => validateRUT(rut),
       { message: "RUT inválido: el dígito verificador es incorrecto" }
     ),
-  nombre: z.string()
-    .min(2, "Nombre debe tener al menos 2 caracteres")
-    .max(100, "Nombre no puede exceder 100 caracteres"),
+  nombres: z.string()
+    .min(2, "Nombres debe tener al menos 2 caracteres")
+    .max(100, "Nombres no puede exceder 100 caracteres"),
+  apellidoPaterno: z.string()
+    .min(2, "Apellido paterno debe tener al menos 2 caracteres")
+    .max(50, "Apellido paterno no puede exceder 50 caracteres"),
+  apellidoMaterno: z.preprocess(emptyToNull, z.string()
+    .max(50, "Apellido materno no puede exceder 50 caracteres")
+    .nullable()
+    .optional()),
   telefono: z.preprocess(emptyToNull, z.string()
     .regex(/^\+?[1-9]\d{1,14}$/, "Teléfono debe tener formato válido")
     .nullable()
@@ -59,10 +66,18 @@ const updateClienteSchema = z.object({
       { message: "RUT inválido: el dígito verificador es incorrecto" }
     )
     .optional(),
-  nombre: z.string()
-    .min(2, "Nombre debe tener al menos 2 caracteres")
-    .max(100, "Nombre no puede exceder 100 caracteres")
+  nombres: z.string()
+    .min(2, "Nombres debe tener al menos 2 caracteres")
+    .max(100, "Nombres no puede exceder 100 caracteres")
     .optional(),
+  apellidoPaterno: z.string()
+    .min(2, "Apellido paterno debe tener al menos 2 caracteres")
+    .max(50, "Apellido paterno no puede exceder 50 caracteres")
+    .optional(),
+  apellidoMaterno: z.preprocess(emptyToNull, z.string()
+    .max(50, "Apellido materno no puede exceder 50 caracteres")
+    .nullable()
+    .optional()),
   telefono: z.preprocess(emptyToNull, z.string()
     .regex(/^\+?[1-9]\d{1,14}$/, "Teléfono debe tener formato válido")
     .nullable()
@@ -72,14 +87,20 @@ const updateClienteSchema = z.object({
     .max(120, "Correo no puede exceder 120 caracteres")
     .nullable()
     .optional()),
-  direccion: z.preprocess(emptyToNull, z.string()
-    .max(150, "Dirección no puede exceder 150 caracteres")
+  calle: z.preprocess(emptyToNull, z.string()
+    .max(100, "Calle no puede exceder 100 caracteres")
     .nullable()
     .optional()),
-  sector: z.preprocess(emptyToNull, z.string()
-    .max(80, "Sector no puede exceder 80 caracteres")
+  numero: z.preprocess(emptyToNull, z.string()
+    .max(20, "Número no puede exceder 20 caracteres")
     .nullable()
-    .optional())
+    .optional()),
+  departamento: z.preprocess(emptyToNull, z.string()
+    .max(20, "Departamento no puede exceder 20 caracteres")
+    .nullable()
+    .optional()),
+  idSector: z.preprocess(emptyToNull, z.number().int().positive().nullable().optional()),
+  idComuna: z.preprocess(emptyToNull, z.number().int().positive().nullable().optional())
 });
 
 export async function clienteRoutes(app: FastifyInstance) {
@@ -107,7 +128,9 @@ export async function clienteRoutes(app: FastifyInstance) {
         where.OR = [
           { rut: searchTerm },
           { rut: { contains: rutLimpio } },
-          { nombre: { contains: searchTerm } }
+          { nombres: { contains: searchTerm } },
+          { apellidoPaterno: { contains: searchTerm } },
+          { apellidoMaterno: { contains: searchTerm } }
         ];
       }
       
@@ -148,9 +171,12 @@ export async function clienteRoutes(app: FastifyInstance) {
         // Sanitizar datos para prevenir XSS
         const sanitizedData = sanitizeObject(parsed.data);
         
+        // Limpiar campos que ya no existen en el schema
+        const { direccion, sector, ...datosLimpios } = sanitizedData as any;
+        
         const nuevo = await prisma.cliente.create({ 
           data: { 
-            ...sanitizedData, 
+            ...datosLimpios, 
             idVendedor: user?.sub || null 
           } 
         });

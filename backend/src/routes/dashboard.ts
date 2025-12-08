@@ -157,7 +157,9 @@ export async function dashboardRoutes(app: FastifyInstance) {
         include: {
           cliente: {
             select: {
-              nombre: true,
+              nombres: true,
+              apellidoPaterno: true,
+              apellidoMaterno: true,
               rut: true,
             },
           },
@@ -214,14 +216,17 @@ export async function dashboardRoutes(app: FastifyInstance) {
         })),
         topVendedores: topVendedores.map((v) => ({
           idUsuario: v.idUsuario,
-          nombre: v.nombre,
+          nombre: `${v.nombres} ${v.apellidoPaterno}${v.apellidoMaterno ? ' ' + v.apellidoMaterno : ''}`,
           clientesCaptados: v.clientesCaptados.length,
         })),
         ventasRecientes: ventasRecientes.map((v) => ({
           idVenta: v.idVenta,
           fechaVenta: v.fechaVenta,
           total: Number(v.total),
-          cliente: v.cliente,
+          cliente: {
+            nombre: `${v.cliente.nombres} ${v.cliente.apellidoPaterno}${v.cliente.apellidoMaterno ? ' ' + v.cliente.apellidoMaterno : ''}`,
+            rut: v.cliente.rut,
+          },
         })),
         ventasPorMes,
       };

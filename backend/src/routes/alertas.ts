@@ -103,7 +103,9 @@ export async function alertaRoutes(app: FastifyInstance) {
             select: {
               idCliente: true,
               rut: true,
-              nombre: true,
+              nombres: true,
+              apellidoPaterno: true,
+              apellidoMaterno: true,
               telefono: true,
               correo: true
             }
@@ -181,7 +183,9 @@ export async function alertaRoutes(app: FastifyInstance) {
           select: {
             idCliente: true,
             rut: true,
-            nombre: true,
+            nombres: true,
+            apellidoPaterno: true,
+            apellidoMaterno: true,
             telefono: true,
             correo: true
           }

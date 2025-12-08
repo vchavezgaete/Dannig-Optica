@@ -192,7 +192,9 @@ export async function garantiaRoutes(app: FastifyInstance) {
                   select: {
                     idCliente: true,
                     rut: true,
-                    nombre: true,
+                    nombres: true,
+                    apellidoPaterno: true,
+                    apellidoMaterno: true,
                     telefono: true,
                     correo: true
                   }
@@ -368,7 +370,9 @@ export async function garantiaRoutes(app: FastifyInstance) {
                   select: {
                     idCliente: true,
                     rut: true,
-                    nombre: true,
+                    nombres: true,
+                    apellidoPaterno: true,
+                    apellidoMaterno: true,
                     telefono: true,
                     correo: true
                   }

@@ -77,7 +77,9 @@ export async function operativoRoutes(app: FastifyInstance) {
             cliente: {
               select: {
                 idCliente: true,
-                nombre: true,
+                nombres: true,
+                apellidoPaterno: true,
+                apellidoMaterno: true,
                 rut: true,
               },
             },

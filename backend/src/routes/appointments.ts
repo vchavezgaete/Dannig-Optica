@@ -102,12 +102,31 @@ export async function appointmentRoutes(app: FastifyInstance) {
         estado: mapEstado(estado) as any,
       },
       include: { 
-        cliente: true,
-        operativo: true,
+        cliente: {
+          select: {
+            idCliente: true,
+            rut: true,
+            nombres: true,
+            apellidoPaterno: true,
+            apellidoMaterno: true,
+            telefono: true,
+            correo: true
+          }
+        },
+        operativo: {
+          select: {
+            idOperativo: true,
+            nombre: true,
+            lugar: true,
+            fecha: true
+          }
+        },
         medico: { // Incluir datos del médico en la respuesta
           select: {
             idUsuario: true,
-            nombre: true,
+            nombres: true,
+            apellidoPaterno: true,
+            apellidoMaterno: true,
             correo: true
           }
         },
@@ -138,9 +157,12 @@ export async function appointmentRoutes(app: FastifyInstance) {
         let asunto = "Confirmación de Cita - Dannig Óptica";
         let mensaje = "";
 
+        // Construir nombre completo del cliente
+        const nombreCompletoCliente = `${cita.cliente.nombres} ${cita.cliente.apellidoPaterno}${cita.cliente.apellidoMaterno ? ' ' + cita.cliente.apellidoMaterno : ''}`;
+
         if (cita.estado === "Confirmada") {
           const template = plantillas.confirmacionCita(
-            cita.cliente.nombre,
+            nombreCompletoCliente,
             fechaHoraFormateada,
             lugar
           );
@@ -149,12 +171,12 @@ export async function appointmentRoutes(app: FastifyInstance) {
         } else {
           // For Programada state, send scheduling confirmation
           const template = plantillas.recordatorioCita(
-            cita.cliente.nombre,
+            nombreCompletoCliente,
             fechaHoraFormateada,
             lugar
           );
           asunto = "Cita Agendada - Dannig Óptica";
-          mensaje = `Hola ${cita.cliente.nombre},\n\nTu cita ha sido agendada para:\nFecha y Hora: ${fechaHoraFormateada}\nLugar: ${lugar}\n\nTe esperamos.\n\nSaludos,\nEquipo Dannig Óptica`;
+          mensaje = `Hola ${nombreCompletoCliente},\n\nTu cita ha sido agendada para:\nFecha y Hora: ${fechaHoraFormateada}\nLugar: ${lugar}\n\nTe esperamos.\n\nSaludos,\nEquipo Dannig Óptica`;
         }
 
         // Determine notification channels

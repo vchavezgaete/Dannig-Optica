@@ -79,8 +79,9 @@ export async function generarAlertasCitas(): Promise<number> {
       const lugar = cita.operativo?.lugar || "";
 
       // Obtener mensaje desde plantilla
+      const nombreCompletoCliente = `${cita.cliente.nombres} ${cita.cliente.apellidoPaterno}${cita.cliente.apellidoMaterno ? ' ' + cita.cliente.apellidoMaterno : ''}`;
       const { asunto, mensaje } = plantillas.recordatorioCita(
-        cita.cliente.nombre,
+        nombreCompletoCliente,
         fechaHora,
         lugar
       );
@@ -171,9 +172,12 @@ export async function generarAlertasGarantias(): Promise<number> {
         day: "numeric",
       });
 
+      // Construir nombre completo del cliente
+      const nombreCompletoCliente = `${cliente.nombres} ${cliente.apellidoPaterno}${cliente.apellidoMaterno ? ' ' + cliente.apellidoMaterno : ''}`;
+      
       // Obtener mensaje desde plantilla
       const { asunto, mensaje } = plantillas.vencimientoGarantia(
-        cliente.nombre,
+        nombreCompletoCliente,
         garantia.item.producto.nombre,
         fechaVencimiento
       );
@@ -255,9 +259,12 @@ export async function generarAlertasOperativos(operativoId: number): Promise<num
 
     const lugar = operativo.lugar || "";
 
+    // Construir nombre completo del cliente
+    const nombreCompletoCliente = `${cliente.nombres} ${cliente.apellidoPaterno}${cliente.apellidoMaterno ? ' ' + cliente.apellidoMaterno : ''}`;
+    
     // Obtener mensaje desde plantilla
     const { asunto, mensaje } = plantillas.nuevoOperativo(
-      cliente.nombre,
+      nombreCompletoCliente,
       operativo.nombre,
       fecha,
       lugar

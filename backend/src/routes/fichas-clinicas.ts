@@ -45,8 +45,6 @@ export async function fichaClinicaRoutes(app: FastifyInstance) {
       const ficha = await prisma.fichaClinica.create({
         data: {
           idCita: body.idCita,
-          antecedentesGenerales: body.antecedentesGenerales || null,
-          antecedentesOftalmologicos: body.antecedentesOftalmologicos || null,
           observaciones: body.observaciones || null,
         },
         include: {
@@ -116,8 +114,6 @@ export async function fichaClinicaRoutes(app: FastifyInstance) {
       const ficha = await prisma.fichaClinica.update({
         where: { idFicha },
         data: {
-          antecedentesGenerales: body.antecedentesGenerales,
-          antecedentesOftalmologicos: body.antecedentesOftalmologicos,
           observaciones: body.observaciones,
         },
         include: {

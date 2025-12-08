@@ -229,7 +229,9 @@ export async function ventaRoutes(app: FastifyInstance) {
           select: {
             idCliente: true,
             rut: true,
-            nombre: true,
+            nombres: true,
+            apellidoPaterno: true,
+            apellidoMaterno: true,
             telefono: true,
             correo: true
           }

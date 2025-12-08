@@ -77,7 +77,9 @@ async function getTopVendedores(
         where: whereClause,
         select: { 
           idCliente: true,
-          nombre: true,
+          nombres: true,
+          apellidoPaterno: true,
+          apellidoMaterno: true,
           fechaCreacion: true
         }
       },
@@ -94,11 +96,15 @@ async function getTopVendedores(
   const result = vendedores
     .map(v => ({
       idUsuario: v.idUsuario,
-      nombre: v.nombre,
+      nombre: `${v.nombres} ${v.apellidoPaterno}${v.apellidoMaterno ? ' ' + v.apellidoMaterno : ''}`,
       correo: v.correo,
       totalClientes: v.clientesCaptados.length,
-      roles: v.roles.map(r => r.rol.nombre),
-      clientes: v.clientesCaptados
+      roles: v.roles.map((r: any) => r.rol.nombre),
+      clientes: v.clientesCaptados.map((c: any) => ({
+        idCliente: c.idCliente,
+        nombre: `${c.nombres} ${c.apellidoPaterno}${c.apellidoMaterno ? ' ' + c.apellidoMaterno : ''}`,
+        fechaCreacion: c.fechaCreacion
+      }))
     }))
     .filter(v => v.totalClientes > 0)
     .sort((a, b) => b.totalClientes - a.totalClientes)
@@ -131,8 +137,7 @@ async function getProductosMasVendidos(
           idProducto: true,
           codigo: true,
           nombre: true,
-          precio: true,
-          tipo: true
+          precio: true
         }
       },
       venta: {
@@ -199,7 +204,9 @@ async function getVentasPorPeriodo(
       total: true,
       cliente: {
         select: {
-          nombre: true
+          nombres: true,
+          apellidoPaterno: true,
+          apellidoMaterno: true
         }
       }
     },
@@ -239,7 +246,9 @@ async function getClientesNuevos(
       vendedor: {
         select: {
           idUsuario: true,
-          nombre: true,
+          nombres: true,
+          apellidoPaterno: true,
+          apellidoMaterno: true,
           correo: true
         }
       }
@@ -274,7 +283,9 @@ async function getTopClientes(
         select: {
           idCliente: true,
           rut: true,
-          nombre: true,
+          nombres: true,
+          apellidoPaterno: true,
+          apellidoMaterno: true,
           telefono: true,
           correo: true
         }
@@ -302,7 +313,10 @@ async function getTopClientes(
       }
     } else {
       clientMap.set(venta.cliente.idCliente, {
-        cliente: venta.cliente,
+        cliente: {
+          ...venta.cliente,
+          nombre: `${venta.cliente.nombres} ${venta.cliente.apellidoPaterno}${venta.cliente.apellidoMaterno ? ' ' + venta.cliente.apellidoMaterno : ''}`
+        },
         totalCompras: 1,
         montoTotal: monto,
         ultimaCompra: venta.fechaVenta
@@ -350,7 +364,9 @@ async function getHorasAgendadas(fechaDesde?: string, fechaHasta?: string, limit
       cliente: {
         select: {
           idCliente: true,
-          nombre: true,
+          nombres: true,
+          apellidoPaterno: true,
+          apellidoMaterno: true,
           rut: true,
           telefono: true,
           correo: true
@@ -397,7 +413,7 @@ async function getHorasAgendadas(fechaDesde?: string, fechaHasta?: string, limit
       observaciones: null, // Campo no disponible en el modelo actual
       cliente: {
         idCliente: cita.cliente.idCliente,
-        nombre: cita.cliente.nombre,
+        nombre: `${cita.cliente.nombres} ${cita.cliente.apellidoPaterno}${cita.cliente.apellidoMaterno ? ' ' + cita.cliente.apellidoMaterno : ''}`,
         rut: cita.cliente.rut,
         telefono: cita.cliente.telefono,
         correo: cita.cliente.correo
