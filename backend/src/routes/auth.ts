@@ -282,8 +282,20 @@ export async function authRoutes(app: FastifyInstance) {
         { expiresIn: "8h" }
       );
 
-      // Construir nombre completo
-      const nombreCompleto = `${user.nombres} ${user.apellidoPaterno}${user.apellidoMaterno ? ' ' + user.apellidoMaterno : ''}`;
+      // Construir nombre completo - manejar tanto el formato antiguo como el nuevo
+      let nombreCompleto: string;
+      const usuario = user as any; // Cast temporal para compatibilidad
+      
+      if (usuario.nombres) {
+        // Formato nuevo: nombres, apellidoPaterno, apellidoMaterno
+        nombreCompleto = `${usuario.nombres} ${usuario.apellidoPaterno || ''}${usuario.apellidoMaterno ? ' ' + usuario.apellidoMaterno : ''}`.trim();
+      } else if (usuario.nombre) {
+        // Formato antiguo: nombre (compatibilidad temporal)
+        nombreCompleto = usuario.nombre;
+      } else {
+        // Fallback: usar correo si no hay nombre
+        nombreCompleto = user.correo.split('@')[0];
+      }
 
       return {
         token,
