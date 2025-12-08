@@ -18,7 +18,7 @@
     "generate:products": "ts-node scripts/generate-products.ts",
     "generate:dummy": "ts-node scripts/generate-dummy-data.ts",
     "migrate:railway": "ts-node --transpile-only scripts/migrate-to-railway.ts",
-    "migrate:railway": "ts-node --transpile-only scripts/migrate-to-railway.ts"
+    "migrate:schema-data": "ts-node --transpile-only scripts/migrate-schema-data.ts"
   },
   "dependencies": {
     "@fastify/cors": "^8.5.0",

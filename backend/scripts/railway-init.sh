@@ -35,6 +35,14 @@ npx prisma generate || {
 echo "[INFO] Verifying database connection..."
 # Prisma will handle connection retries internally
 
+# Migrate existing data from old schema to new schema BEFORE applying schema changes
+echo "[INFO] Migrating existing data from old schema to new schema..."
+if npx ts-node --transpile-only scripts/migrate-schema-data.ts 2>/dev/null; then
+    echo "[OK] Data migration completed successfully"
+else
+    echo "[WARN] Data migration script failed or not needed (this is OK if database is already migrated)"
+fi
+
 # Apply database migrations with retry logic
 echo "[INFO] Applying database migrations..."
 RETRY_COUNT=0

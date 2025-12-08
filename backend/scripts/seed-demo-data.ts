@@ -32,15 +32,25 @@ async function main() {
     
     const hash = password ? await bcrypt.hash(password, 10) : hashedDefaultPassword;
     
+    // Dividir nombre en partes
+    const partes = name.trim().split(/\s+/);
+    const nombres = partes[0] || "Usuario";
+    const apellidoPaterno = partes[1] || "Sin Apellido";
+    const apellidoMaterno = partes.slice(2).join(" ") || null;
+    
     const user = await prisma.usuario.upsert({
       where: { correo: email },
       update: {
-        nombre: name,
+        nombres: nombres,
+        apellidoPaterno: apellidoPaterno,
+        apellidoMaterno: apellidoMaterno,
         // No actualizamos contraseña si el usuario ya existe para evitar bloqueos,
         // a menos que se fuerce un reset manual. Asumimos seguridad primero.
       },
       create: {
-        nombre: name,
+        nombres: nombres,
+        apellidoPaterno: apellidoPaterno,
+        apellidoMaterno: apellidoMaterno,
         correo: email,
         hashPassword: hash,
         activo: 1,
