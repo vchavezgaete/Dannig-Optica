@@ -52,19 +52,31 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   // Validate token expiration before making request
   if (token) {
     if (isTokenExpired(token)) {
-      // Token expired, clear storage and redirect to login
+      // Token expired, clear storage
       localStorage.removeItem("token");
       localStorage.removeItem("roles");
       
-      // Only redirect if not already on login page
-      if (!config.url?.includes('/auth/login') && window.location.pathname !== '/login') {
+      // Only redirect if not already on login page and not during initial page load
+      // Check if we're making a request that's not the login itself
+      const isLoginRequest = config.url?.includes('/auth/login') || config.url?.includes('/login');
+      const isOnLoginPage = window.location.pathname === '/login';
+      
+      if (!isLoginRequest && !isOnLoginPage) {
+        // Only redirect if React Router is ready (not during initial hydration)
+        // Use a small delay to allow React to finish initial render
         if (import.meta.env.DEV) {
-          console.warn('Token expired, redirecting to login');
+          console.warn('Token expired, will redirect to login after request');
         }
-        // Use setTimeout to avoid navigation during request
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 0);
+        
+        // Use requestAnimationFrame to ensure React has finished rendering
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            // Only redirect if still not on login page (avoid race conditions)
+            if (window.location.pathname !== '/login') {
+              window.location.href = '/login';
+            }
+          }, 100);
+        });
       }
       
       // Reject the request with a specific error
@@ -107,13 +119,18 @@ api.interceptors.response.use(
       localStorage.removeItem("roles");
       
       // Only redirect if not already on login page
+      // Use requestAnimationFrame to avoid redirecting during initial page load
       if (window.location.pathname !== '/login') {
         if (import.meta.env.DEV) {
-          console.warn('Unauthorized response, redirecting to login');
+          console.warn('Unauthorized response, will redirect to login');
         }
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 0);
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            if (window.location.pathname !== '/login') {
+              window.location.href = '/login';
+            }
+          }, 100);
+        });
       }
     }
     
