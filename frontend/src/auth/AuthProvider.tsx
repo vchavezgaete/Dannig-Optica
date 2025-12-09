@@ -32,9 +32,46 @@ function isTokenExpired(token: string): boolean {
   return currentTime >= (expTime - 60000);
 }
 
+// Función para inicializar el token desde localStorage (sincrónico)
+function initializeTokenFromStorage(): { token: string | null; roles: string[] } {
+  if (typeof window === 'undefined') {
+    // SSR safety
+    return { token: null, roles: [] };
+  }
+
+  const t = localStorage.getItem("token");
+  
+  if (!t) {
+    // Limpiar roles si no hay token
+    const r = localStorage.getItem("roles");
+    if (r) {
+      localStorage.removeItem("roles");
+    }
+    return { token: null, roles: [] };
+  }
+
+  // Verificar si el token está expirado
+  if (isTokenExpired(t)) {
+    // Token expirado, limpiar storage
+    console.warn('Token expirado al recargar la página');
+    localStorage.removeItem("token");
+    localStorage.removeItem("roles");
+    return { token: null, roles: [] };
+  }
+
+  // Token válido, decodificar y extraer roles
+  const decoded = decodeJWT(t);
+  const userRoles = decoded?.roles || [];
+  
+  return { token: t, roles: userRoles };
+}
+
 export default function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setTokenState] = useState<string | null>(null);
-  const [roles, setRoles] = useState<string[]>([]);
+  // Inicializar el estado directamente desde localStorage (sincrónico)
+  // Esto evita la condición de carrera donde ProtectedRoute se ejecuta antes del useEffect
+  const initialState = initializeTokenFromStorage();
+  const [token, setTokenState] = useState<string | null>(initialState.token);
+  const [roles, setRoles] = useState<string[]>(initialState.roles);
 
   const setToken = (t: string | null) => {
     setTokenState(t);
@@ -52,32 +89,29 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // useEffect para sincronizar cambios externos (por ejemplo, si se limpia localStorage en otra pestaña)
   useEffect(() => {
-    const t = localStorage.getItem("token");
-    const r = localStorage.getItem("roles");
-    
-    if (t) {
-      // Verificar si el token está expirado antes de restaurarlo
-      if (isTokenExpired(t)) {
-        // Token expirado, limpiar storage
-        console.warn('Token expirado al recargar la página');
-        localStorage.removeItem("token");
-        localStorage.removeItem("roles");
-        setTokenState(null);
-        setRoles([]);
-      } else {
-        // Token válido, restaurar estado
-        setTokenState(t);
-        // Decode token to get fresh roles
-        const decoded = decodeJWT(t);
-        const userRoles = decoded?.roles || [];
-        setRoles(userRoles);
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'token') {
+        if (e.newValue) {
+          const newToken = e.newValue;
+          if (!isTokenExpired(newToken)) {
+            setTokenState(newToken);
+            const decoded = decodeJWT(newToken);
+            setRoles(decoded?.roles || []);
+          } else {
+            setTokenState(null);
+            setRoles([]);
+          }
+        } else {
+          setTokenState(null);
+          setRoles([]);
+        }
       }
-    } else if (r) {
-      // Si no hay token pero hay roles guardados, limpiar roles también
-      localStorage.removeItem("roles");
-      setRoles([]);
-    }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const login = ({ token: t }: { token: string }) => setToken(t);
