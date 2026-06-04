@@ -7,9 +7,38 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+export type CitaAgendada = {
+  idCita: number;
+  fechaHora: string;
+  estado: string;
+  tipoConsulta?: string | null;
+  observaciones?: string | null;
+  cliente: {
+    nombre: string;
+    rut: string;
+    telefono?: string | null;
+  };
+};
+
+type EstadisticaEstado = {
+  estado: string;
+  cantidad: number;
+};
+
+type EstadisticasHoras = {
+  totalCitas?: number;
+  porEstado?: EstadisticaEstado[];
+};
+
+type EstadoChartData = {
+  name: string;
+  value: number;
+  color: string;
+};
+
 interface HorasAgendadasTableProps {
-  datos: any[];
-  estadisticas?: any;
+  datos: CitaAgendada[];
+  estadisticas?: EstadisticasHoras;
 }
 
 export default function HorasAgendadasTable({ datos, estadisticas }: HorasAgendadasTableProps) {
@@ -22,7 +51,7 @@ export default function HorasAgendadasTable({ datos, estadisticas }: HorasAgenda
   }
 
   // Preparar datos para gráfico de estados
-  const estadosData = estadisticas?.porEstado?.map((estado: any) => ({
+  const estadosData: EstadoChartData[] = estadisticas?.porEstado?.map((estado) => ({
     name: estado.estado,
     value: estado.cantidad,
     color: getEstadoColor(estado.estado)
@@ -42,14 +71,14 @@ export default function HorasAgendadasTable({ datos, estadisticas }: HorasAgenda
         <div className="card">
           <h3 style={{ margin: "0 0 0.5rem", color: "var(--azul)" }}>✅ Confirmadas</h3>
           <p style={{ margin: 0, fontSize: "2rem", fontWeight: "bold", color: "var(--azul)" }}>
-            {estadosData.find((e: any) => e.name === "confirmada")?.value || 0}
+            {estadosData.find((e) => e.name === "confirmada")?.value || 0}
           </p>
         </div>
         
         <div className="card">
           <h3 style={{ margin: "0 0 0.5rem", color: "var(--naranja)" }}>⏳ Pendientes</h3>
           <p style={{ margin: 0, fontSize: "2rem", fontWeight: "bold", color: "var(--naranja)" }}>
-            {estadosData.find((e: any) => e.name === "pendiente")?.value || 0}
+            {estadosData.find((e) => e.name === "pendiente")?.value || 0}
           </p>
         </div>
       </div>
@@ -65,7 +94,9 @@ export default function HorasAgendadasTable({ datos, estadisticas }: HorasAgenda
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent }) =>
+                  `${name ?? ""} ${(Number(percent ?? 0) * 100).toFixed(0)}%`
+                }
                 outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
@@ -98,7 +129,7 @@ export default function HorasAgendadasTable({ datos, estadisticas }: HorasAgenda
               </tr>
             </thead>
             <tbody>
-              {datos.map((cita: any) => (
+              {datos.map((cita) => (
                 <tr key={cita.idCita}>
                   <td style={{ fontWeight: "600" }}>
                     {new Date(cita.fechaHora).toLocaleString("es-CL", {

@@ -1,7 +1,7 @@
-import { useState, useEffect, useContext } from "react";
-import { AuthContext } from "../auth/AuthContext";
+import { useState, useEffect } from "react";
 import { api } from "../api";
 import { generarPDFReceta, descargarPDFReceta } from "../utils/generarPDFReceta";
+import { getApiErrorMessage } from "../utils/apiError";
 
 // Types
 type Cliente = {
@@ -67,7 +67,6 @@ type NuevaReceta = {
 };
 
 export default function Oftalmologo() {
-  const auth = useContext(AuthContext);
   const [citas, setCitas] = useState<Cita[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(false);
@@ -186,9 +185,9 @@ export default function Oftalmologo() {
       setSelectedCita(null);
       
       alert("✅ Ficha médica guardada exitosamente");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error guardando ficha:", error);
-      alert("❌ Error al guardar la ficha: " + (error.response?.data?.error || error.message));
+      alert("❌ Error al guardar la ficha: " + getApiErrorMessage(error, "Error al guardar la ficha"));
     } finally {
       setSavingFicha(false);
     }

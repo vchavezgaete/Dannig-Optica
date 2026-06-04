@@ -1,3 +1,4 @@
+import './config/load-env';
 import { PrismaClient } from '@prisma/client';
 import { resolveDatabaseUrl, maskDatabaseUrl } from './utils/database';
 

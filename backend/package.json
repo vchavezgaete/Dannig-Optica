@@ -9,16 +9,17 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "postinstall": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:deploy": "prisma migrate deploy",
-    "prisma:generate": "prisma generate",
-    "seed:demo": "ts-node scripts/seed-demo-data.ts",
+    "db:migrate": "node scripts/with-env.cjs prisma migrate dev",
+    "db:push": "node scripts/with-env.cjs prisma db push",
+    "db:deploy": "node scripts/with-env.cjs prisma migrate deploy",
+    "prisma:generate": "node scripts/with-env.cjs prisma generate",
+    "seed:demo": "node scripts/with-env.cjs ts-node scripts/seed-demo-data.ts",
     "generate:clients": "ts-node scripts/generate-test-clients.ts",
     "generate:sales": "ts-node scripts/generate-sales-data.ts",
     "generate:products": "ts-node scripts/generate-products.ts",
     "generate:dummy": "ts-node scripts/generate-dummy-data.ts",
     "migrate:railway": "ts-node --transpile-only scripts/migrate-to-railway.ts",
-    "migrate:schema-data": "ts-node --transpile-only scripts/migrate-schema-data.ts"
+    "migrate:schema-data": "node scripts/with-env.cjs ts-node --transpile-only scripts/migrate-schema-data.ts"
   },
   "dependencies": {
     "@fastify/cors": "^8.5.0",

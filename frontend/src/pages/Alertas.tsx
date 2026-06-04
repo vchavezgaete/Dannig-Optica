@@ -17,9 +17,9 @@
  * 5. Filtrado y búsqueda de alertas
  */
 
-import { useState, useEffect, useContext } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { api } from "../api";
-import { AuthContext } from "../auth/AuthContext";
+import { getApiErrorMessage } from "../utils/apiError";
 
 // Funciones para formatear y validar RUT
 function limpiarRUT(rut: string): string {
@@ -117,8 +117,27 @@ type AlertasResponse = {
   };
 };
 
+type FiltroTipo = "" | Alerta["tipo"];
+type FiltroCanal = "" | Alerta["canal"];
+type FiltroEnviado = "" | "true" | "false";
+
+const ALERTA_TIPOS: Alerta["tipo"][] = ["Control", "Garantia", "Operativo"];
+const ALERTA_CANALES: Alerta["canal"][] = ["SMS", "Correo"];
+const FILTRO_ENVIADO_VALUES: FiltroEnviado[] = ["", "true", "false"];
+
+function asFiltroTipo(value: string): FiltroTipo {
+  return value === "" || ALERTA_TIPOS.includes(value as Alerta["tipo"]) ? (value as FiltroTipo) : "";
+}
+
+function asFiltroCanal(value: string): FiltroCanal {
+  return value === "" || ALERTA_CANALES.includes(value as Alerta["canal"]) ? (value as FiltroCanal) : "";
+}
+
+function asFiltroEnviado(value: string): FiltroEnviado {
+  return FILTRO_ENVIADO_VALUES.includes(value as FiltroEnviado) ? (value as FiltroEnviado) : "";
+}
+
 export default function Alertas() {
-  const auth = useContext(AuthContext);
   const [alertas, setAlertas] = useState<Alerta[]>([]);
   const [estadisticas, setEstadisticas] = useState<AlertasResponse["estadisticas"] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -126,9 +145,9 @@ export default function Alertas() {
   const [msg, setMsg] = useState<string | null>(null);
   
   // Filtros
-  const [filtroTipo, setFiltroTipo] = useState<"" | "Control" | "Garantia" | "Operativo">("");
-  const [filtroCanal, setFiltroCanal] = useState<"" | "SMS" | "Correo">("");
-  const [filtroEnviado, setFiltroEnviado] = useState<"" | "true" | "false">("");
+  const [filtroTipo, setFiltroTipo] = useState<FiltroTipo>("");
+  const [filtroCanal, setFiltroCanal] = useState<FiltroCanal>("");
+  const [filtroEnviado, setFiltroEnviado] = useState<FiltroEnviado>("");
   
   // Modal de nueva alerta
   const [showNuevaAlerta, setShowNuevaAlerta] = useState(false);
@@ -141,22 +160,11 @@ export default function Alertas() {
     fechaProgramada: new Date().toISOString().slice(0, 16),
   });
 
-  useEffect(() => {
-    loadAlertas();
-  }, [filtroTipo, filtroCanal, filtroEnviado]);
-
-  useEffect(() => {
-    if (msg) {
-      const timer = setTimeout(() => setMsg(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [msg]);
-
-  const loadAlertas = async () => {
+  const loadAlertas = useCallback(async () => {
     setLoading(true);
     setErr(null);
     try {
-      const params: any = {};
+      const params: Partial<Record<"tipo" | "canal" | "enviado", string>> = {};
       if (filtroTipo) params.tipo = filtroTipo;
       if (filtroCanal) params.canal = filtroCanal;
       if (filtroEnviado) params.enviado = filtroEnviado;
@@ -164,12 +172,23 @@ export default function Alertas() {
       const res = await api.get<AlertasResponse>("/alertas", { params });
       setAlertas(res.data.alertas);
       setEstadisticas(res.data.estadisticas);
-    } catch (error: any) {
-      setErr(error.response?.data?.error || "Error al cargar alertas");
+    } catch (error: unknown) {
+      setErr(getApiErrorMessage(error, "Error al cargar alertas"));
     } finally {
       setLoading(false);
     }
-  };
+  }, [filtroTipo, filtroCanal, filtroEnviado]);
+
+  useEffect(() => {
+    loadAlertas();
+  }, [loadAlertas]);
+
+  useEffect(() => {
+    if (msg) {
+      const timer = setTimeout(() => setMsg(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [msg]);
 
   const buscarCliente = async () => {
     if (!clienteRut.trim()) {
@@ -191,8 +210,8 @@ export default function Alertas() {
         setErr("Cliente no encontrado");
         setClienteSeleccionado(null);
       }
-    } catch (error: any) {
-      setErr(error.response?.data?.error || "Cliente no encontrado");
+    } catch (error: unknown) {
+      setErr(getApiErrorMessage(error, "Cliente no encontrado"));
       setClienteSeleccionado(null);
     } finally {
       setLoading(false);
@@ -232,8 +251,8 @@ export default function Alertas() {
         fechaProgramada: new Date().toISOString().slice(0, 16),
       });
       await loadAlertas();
-    } catch (error: any) {
-      setErr(error.response?.data?.error || "Error al crear la alerta");
+    } catch (error: unknown) {
+      setErr(getApiErrorMessage(error, "Error al crear la alerta"));
     } finally {
       setLoading(false);
     }
@@ -248,8 +267,8 @@ export default function Alertas() {
       await api.delete(`/alertas/${id}`);
       setMsg("✅ Alerta eliminada exitosamente");
       await loadAlertas();
-    } catch (error: any) {
-      setErr(error.response?.data?.error || "Error al eliminar la alerta");
+    } catch (error: unknown) {
+      setErr(getApiErrorMessage(error, "Error al eliminar la alerta"));
     } finally {
       setLoading(false);
     }
@@ -262,8 +281,8 @@ export default function Alertas() {
       const res = await api.post("/alertas/generar-citas");
       setMsg(`✅ ${res.data.alertasCreadas} alertas de citas generadas`);
       await loadAlertas();
-    } catch (error: any) {
-      setErr(error.response?.data?.error || "Error al generar alertas");
+    } catch (error: unknown) {
+      setErr(getApiErrorMessage(error, "Error al generar alertas"));
     } finally {
       setLoading(false);
     }
@@ -276,8 +295,8 @@ export default function Alertas() {
       const res = await api.post("/alertas/generar-garantias");
       setMsg(`✅ ${res.data.alertasCreadas} alertas de garantías generadas`);
       await loadAlertas();
-    } catch (error: any) {
-      setErr(error.response?.data?.error || "Error al generar alertas");
+    } catch (error: unknown) {
+      setErr(getApiErrorMessage(error, "Error al generar alertas"));
     } finally {
       setLoading(false);
     }
@@ -290,8 +309,8 @@ export default function Alertas() {
       const res = await api.post("/alertas/procesar");
       setMsg(`✅ ${res.data.alertasEnviadas} alertas procesadas y enviadas`);
       await loadAlertas();
-    } catch (error: any) {
-      setErr(error.response?.data?.error || "Error al procesar alertas");
+    } catch (error: unknown) {
+      setErr(getApiErrorMessage(error, "Error al procesar alertas"));
     } finally {
       setLoading(false);
     }
@@ -410,7 +429,7 @@ export default function Alertas() {
             <select
               className="form__input"
               value={filtroTipo}
-              onChange={(e) => setFiltroTipo(e.target.value as any)}
+              onChange={(e) => setFiltroTipo(asFiltroTipo(e.target.value))}
             >
               <option value="">Todos</option>
               <option value="Control">Control</option>
@@ -423,7 +442,7 @@ export default function Alertas() {
             <select
               className="form__input"
               value={filtroCanal}
-              onChange={(e) => setFiltroCanal(e.target.value as any)}
+              onChange={(e) => setFiltroCanal(asFiltroCanal(e.target.value))}
             >
               <option value="">Todos</option>
               <option value="Correo">Correo</option>
@@ -435,7 +454,7 @@ export default function Alertas() {
             <select
               className="form__input"
               value={filtroEnviado}
-              onChange={(e) => setFiltroEnviado(e.target.value as any)}
+              onChange={(e) => setFiltroEnviado(asFiltroEnviado(e.target.value))}
             >
               <option value="">Todos</option>
               <option value="false">Pendientes</option>
@@ -611,7 +630,7 @@ export default function Alertas() {
                 <select
                   className="form__input"
                   value={nuevaAlerta.tipo}
-                  onChange={(e) => setNuevaAlerta({ ...nuevaAlerta, tipo: e.target.value as any })}
+                  onChange={(e) => setNuevaAlerta({ ...nuevaAlerta, tipo: asFiltroTipo(e.target.value) || "Control" })}
                 >
                   <option value="Control">Control</option>
                   <option value="Garantia">Garantía</option>
@@ -623,7 +642,7 @@ export default function Alertas() {
                 <select
                   className="form__input"
                   value={nuevaAlerta.canal}
-                  onChange={(e) => setNuevaAlerta({ ...nuevaAlerta, canal: e.target.value as any })}
+                  onChange={(e) => setNuevaAlerta({ ...nuevaAlerta, canal: asFiltroCanal(e.target.value) || "Correo" })}
                 >
                   <option value="Correo">Correo</option>
                   <option value="SMS">SMS</option>

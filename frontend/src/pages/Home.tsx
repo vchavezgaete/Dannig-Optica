@@ -10,8 +10,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  LineChart,
-  Line,
 } from "recharts";
 
 type Producto = { 
@@ -84,7 +82,7 @@ export default function Home() {
         try {
           const res = await api.get<DashboardMetrics>("/dashboard/metrics");
           setDashboardData(res.data);
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error("Error loading dashboard:", error);
           setErr("No se pudo cargar métricas del dashboard");
         } finally {

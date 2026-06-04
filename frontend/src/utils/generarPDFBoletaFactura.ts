@@ -62,8 +62,6 @@ function generateBoletaHTML(data: VentaData): string {
     month: '2-digit',
     year: 'numeric'
   });
-  const { neto, iva, total } = calcularIVA(Number(data.total), false);
-
   return `
     <!DOCTYPE html>
     <html>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { api } from "../api";
 import { AuthContext } from "../auth/AuthContext";
+import { getApiErrorMessage } from "../utils/apiError";
 
 type Rol = {
   idRol: number;
@@ -16,6 +17,16 @@ type Usuario = {
   correo: string;
   activo: number;
   roles: string[];
+};
+
+type UsuarioPayload = {
+  nombres: string;
+  apellidoPaterno: string;
+  apellidoMaterno: string | null;
+  correo: string;
+  idRol: number;
+  activo: number;
+  password?: string;
 };
 
 export default function Usuarios() {
@@ -47,7 +58,7 @@ export default function Usuarios() {
     try {
       const { data } = await api.get<Usuario[]>("/usuarios");
       setListaUsuarios(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error cargando usuarios:", error);
       setError("Error al cargar la lista de usuarios");
     } finally {
@@ -59,7 +70,7 @@ export default function Usuarios() {
     try {
       const { data } = await api.get<Rol[]>("/usuarios/roles");
       setListaRoles(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error cargando roles:", error);
       setError("Error al cargar los roles disponibles");
     }
@@ -117,8 +128,8 @@ export default function Usuarios() {
       await api.delete(`/usuarios/${id}`);
       setMensaje("Usuario desactivado exitosamente");
       await cargarUsuarios();
-    } catch (error: any) {
-      setError(error.response?.data?.error || "Error al desactivar el usuario");
+    } catch (error: unknown) {
+      setError(getApiErrorMessage(error, "Error al desactivar el usuario"));
     } finally {
       setCargando(false);
     }
@@ -130,7 +141,7 @@ export default function Usuarios() {
     setError(null);
 
     try {
-      const payload: any = {
+      const payload: UsuarioPayload = {
         nombres: datosFormulario.nombres,
         apellidoPaterno: datosFormulario.apellidoPaterno,
         apellidoMaterno: datosFormulario.apellidoMaterno || null,
@@ -159,9 +170,9 @@ export default function Usuarios() {
       
       setMostrarModal(false);
       await cargarUsuarios();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error guardando usuario:", error);
-      setError(error.response?.data?.error || "Error al guardar el usuario");
+      setError(getApiErrorMessage(error, "Error al guardar el usuario"));
     } finally {
       setCargando(false);
     }

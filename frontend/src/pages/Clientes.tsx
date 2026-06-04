@@ -1,7 +1,8 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useCallback, useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { AuthContext } from "../auth/AuthContext";
+import { getApiErrorData, getApiErrorMessage, getApiStatus } from "../utils/apiError";
 
 // Funciones para formatear y validar RUT
 function limpiarRUT(rut: string): string {
@@ -95,6 +96,20 @@ type HistorialData = {
   }>;
 };
 
+function formatFieldErrors(fieldErrors: unknown): string | null {
+  if (!fieldErrors || typeof fieldErrors !== "object") return null;
+
+  const entries = Object.entries(fieldErrors as Record<string, unknown>);
+  if (entries.length === 0) return null;
+
+  return entries
+    .map(([field, errors]) => {
+      const list = Array.isArray(errors) ? errors.map(String).join(", ") : String(errors);
+      return `${field}: ${list}`;
+    })
+    .join("; ");
+}
+
 export default function Clientes() {
   const navigate = useNavigate();
   const auth = useContext(AuthContext);
@@ -124,7 +139,7 @@ export default function Clientes() {
   const isAdmin = auth?.hasRole('admin');
 
   // Cargar lista de clientes
-  const cargarListaClientes = async () => {
+  const cargarListaClientes = useCallback(async () => {
     setLoadingList(true);
     setErr(null);
     try {
@@ -139,21 +154,21 @@ export default function Clientes() {
       } else {
         setClientesList([]);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error cargando clientes:", error);
       setErr("Error al cargar la lista de clientes");
       setClientesList([]);
     } finally {
       setLoadingList(false);
     }
-  };
+  }, [searchQuery]);
 
   // Cargar lista al montar y cuando cambia la búsqueda
   useEffect(() => {
     if (activeView === 'lista') {
       cargarListaClientes();
     }
-  }, [activeView, searchQuery]);
+  }, [activeView, cargarListaClientes]);
 
   async function buscar() {
     setErr(null); setCliente(null); setLoading(true);
@@ -214,17 +229,16 @@ export default function Clientes() {
       await buscar();
       setShowEditModal(false);
       setErr(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error actualizando cliente:", error);
-      const msg = error.response?.data?.error || error.response?.data?.message || "Error al actualizar cliente";
+      const data = getApiErrorData(error);
+      const msg = getApiErrorMessage(error, "Error al actualizar cliente");
       
       // Mostrar detalles de validación si existen
-      if (error.response?.data?.issues) {
-        const issues = error.response.data.issues;
+      if (data?.issues && typeof data.issues === "object") {
+        const issues = data.issues as { fieldErrors?: unknown };
         if (issues.fieldErrors) {
-          const detalles = Object.entries(issues.fieldErrors)
-            .map(([field, errs]) => `${field}: ${(errs as any[]).join(', ')}`)
-            .join('; ');
+          const detalles = formatFieldErrors(issues.fieldErrors);
           setErr(`${msg}: ${detalles}`);
         } else {
           setErr(`${msg}: Datos inválidos`);
@@ -258,15 +272,16 @@ export default function Clientes() {
       cargarListaClientes();
       alert(`Cliente "${nombre}" eliminado correctamente.`);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error eliminando cliente:", error);
-      const msg = error.response?.data?.error || error.response?.data?.message || "Error al eliminar cliente";
+      const data = getApiErrorData(error);
+      const msg = getApiErrorMessage(error, "Error al eliminar cliente");
       
-      if (error.response?.status === 409 && error.response?.data?.detalles) {
-         const detalles = error.response.data.detalles;
+      if (getApiStatus(error) === 409 && data?.detalles && typeof data.detalles === "object") {
+         const detalles = data.detalles as { citas?: number; ventas?: number };
          const razon = [];
-         if (detalles.citas > 0) razon.push(`${detalles.citas} citas`);
-         if (detalles.ventas > 0) razon.push(`${detalles.ventas} ventas`);
+         if ((detalles.citas ?? 0) > 0) razon.push(`${detalles.citas} citas`);
+         if ((detalles.ventas ?? 0) > 0) razon.push(`${detalles.ventas} ventas`);
          setErr(`${msg} (Tiene ${razon.join(" y ")})`);
       } else {
          setErr(msg);

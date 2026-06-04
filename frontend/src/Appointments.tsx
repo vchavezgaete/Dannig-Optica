@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "./api";
+import { getApiErrorMessage } from "./utils/apiError";
 
 type Lead = { idCliente: number; nombre: string; rut: string; telefono?: string };
 type Estado = "Programada" | "Confirmada" | "Cancelada" | "NoShow" | "Atendida";
@@ -14,6 +15,11 @@ type Appointment = {
   medico?: { idUsuario: number; nombre: string }; // Tipo actualizado
 };
 type Oftalmologo = { idUsuario: number; nombre: string; correo: string };
+type AppointmentPayload = {
+  leadId: number;
+  fechaHora: string;
+  idMedico?: number;
+};
 
 const ESTADOS_INPUT: readonly EstadoInput[] = ["pendiente", "confirmada", "cancelada", "no-show"] as const;
 
@@ -196,7 +202,7 @@ export default function Appointments() {
     setBusy(true);
     try {
       const iso = new Date(fechaHora).toISOString();
-      const payload: any = { 
+      const payload: AppointmentPayload = {
         leadId: Number(leadId), 
         fechaHora: iso 
       };
@@ -225,9 +231,9 @@ export default function Appointments() {
       
       // Mostrar mensaje de éxito
       alert("✅ Cita agendada exitosamente");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creando cita:", error);
-      alert(`❌ Error al agendar la cita: ${error.response?.data?.error || error.message}`);
+      alert(`❌ Error al agendar la cita: ${getApiErrorMessage(error, "Error al agendar la cita")}`);
     } finally {
       setBusy(false);
     }
@@ -275,12 +281,6 @@ export default function Appointments() {
     const hoy = new Date();
     return fechaCita.toDateString() === hoy.toDateString();
   });
-
-  const citasProximas = appts.filter(a => {
-    const fechaCita = new Date(a.fechaHora);
-    const ahora = new Date();
-    return fechaCita > ahora && fechaCita.toDateString() !== ahora.toDateString();
-  }).slice(0, 10);
 
   return (
     <div className="grid">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { api } from "../api";
 import { AuthContext } from "../auth/AuthContext";
+import { getApiErrorMessage } from "../utils/apiError";
 
 type Producto = {
   idProducto: number;
@@ -35,7 +36,7 @@ export default function Productos() {
     try {
       const { data } = await api.get<Producto[]>("/productos");
       setProductos(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error loading productos:", error);
       setErr("Error al cargar la lista de productos");
     } finally {
@@ -86,7 +87,7 @@ export default function Productos() {
       await api.delete(`/productos/${id}`);
       setMsg("Producto eliminado exitosamente");
       await loadProductos();
-    } catch (error: any) {
+    } catch {
       setErr("No se puede eliminar el producto porque ya tiene ventas asociadas");
     } finally {
       setLoading(false);
@@ -114,9 +115,9 @@ export default function Productos() {
       
       setShowModal(false);
       await loadProductos();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error saving producto:", error);
-      setErr(error.response?.data?.error || "Error al guardar el producto");
+      setErr(getApiErrorMessage(error, "Error al guardar el producto"));
     } finally {
       setLoading(false);
     }

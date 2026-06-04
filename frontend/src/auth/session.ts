@@ -1,4 +1,4 @@
-import { Usuario, PROFILE_ID_MAP } from './types';
+import { PROFILE_ID_MAP, type Usuario } from './types';
 
 const STORAGE_KEY = 'dannig_auth_v1';
 
@@ -24,7 +24,9 @@ export function loadSession():
     const parsed = JSON.parse(raw);
     // seguridad básica: validar estructura mínima
     if (parsed?.token && parsed?.user?.id && parsed?.user?.perfil) return parsed;
-  } catch {}
+  } catch {
+    return null;
+  }
   return null;
 }
 

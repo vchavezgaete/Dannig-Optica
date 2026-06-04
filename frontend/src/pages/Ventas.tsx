@@ -16,10 +16,10 @@
  * 5. Registro de garantías por item de venta
  */
 
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import { api } from "../api";
-import { AuthContext } from "../auth/AuthContext";
 import { generarPDFBoletaFactura, descargarPDFBoletaFactura } from "../utils/generarPDFBoletaFactura";
+import { getApiErrorData, getApiErrorMessage, getApiStatus } from "../utils/apiError";
 
 // Funciones para formatear y validar RUT
 function limpiarRUT(rut: string): string {
@@ -138,8 +138,6 @@ type Venta = {
 };
 
 export default function Ventas() {
-  const auth = useContext(AuthContext);
-  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [recetas, setRecetas] = useState<Receta[]>([]);
   const [ventas, setVentas] = useState<Venta[]>([]);
@@ -182,12 +180,10 @@ export default function Ventas() {
     setLoading(true);
     setErr(null);
     try {
-      const [clientesRes, productosRes, ventasRes] = await Promise.all([
-        api.get<Cliente[]>("/clientes"),
+      const [productosRes, ventasRes] = await Promise.all([
         api.get<Producto[]>("/productos"),
         api.get<Venta[]>("/ventas")
       ]);
-      setClientes(clientesRes.data);
       setProductos(productosRes.data || []);
       setVentas(ventasRes.data);
       
@@ -197,13 +193,13 @@ export default function Ventas() {
       } else {
         //setErr("No hay productos disponibles. Ejecuta el script 'npm run generate:products' en el backend para generar productos de ejemplo.");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error cargando datos:", error);
-      const errorMessage = error.response?.data?.error || error.message || "Error al cargar datos";
+      const errorMessage = getApiErrorMessage(error, "Error al cargar datos");
       setErr(errorMessage);
       
       // Si el error es específico de productos, dar instrucciones
-      if (errorMessage.includes("productos") || error.response?.status === 404) {
+      if (errorMessage.includes("productos") || getApiStatus(error) === 404) {
         setErr(`${errorMessage}. Asegúrate de ejecutar 'npm run generate:products' en el backend.`);
       }
     } finally {
@@ -240,9 +236,9 @@ export default function Ventas() {
         setErr("Cliente no encontrado");
         setClienteSeleccionado(null);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error buscando cliente:", error);
-      setErr(error.response?.data?.error || "Error al buscar cliente. Verifica que el RUT sea correcto.");
+      setErr(getApiErrorMessage(error, "Error al buscar cliente. Verifica que el RUT sea correcto."));
       setClienteSeleccionado(null);
     } finally {
       setLoading(false);
@@ -256,7 +252,7 @@ export default function Ventas() {
         params: { clienteId: idCliente.toString() }
       });
       // Las recetas vienen con la estructura ficha.cita.cliente
-      const recetasFiltradas = res.data.filter((receta: any) => 
+      const recetasFiltradas = res.data.filter((receta) =>
         receta.ficha?.cita?.cliente?.idCliente === idCliente
       );
       setRecetas(recetasFiltradas);
@@ -265,7 +261,7 @@ export default function Ventas() {
       // Si falla, intentar obtener todas y filtrar manualmente
       try {
         const todasRecetas = await api.get<Receta[]>("/recetas");
-        const recetasFiltradas = todasRecetas.data.filter((receta: any) => 
+        const recetasFiltradas = todasRecetas.data.filter((receta) =>
           receta.ficha?.cita?.cliente?.idCliente === idCliente
         );
         setRecetas(recetasFiltradas);
@@ -370,16 +366,20 @@ export default function Ventas() {
       
       // Recargar ventas
       await loadData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creando venta:", error);
-      const errorMsg = error.response?.data?.error || error.response?.data?.issues || error.message || "Error al crear la venta";
+      const data = getApiErrorData(error);
+      const errorMsg = getApiErrorMessage(error, "Error al crear la venta");
       setErr(errorMsg);
       // Si hay issues de validación, mostrarlos
-      if (error.response?.data?.issues) {
-        const issues = error.response.data.issues;
+      if (data?.issues && typeof data.issues === "object") {
+        const issues = data.issues as {
+          fieldErrors?: Record<string, unknown>;
+          formErrors?: unknown;
+        };
         let issuesText = "Errores de validación:\n";
         if (issues.fieldErrors) {
-          Object.entries(issues.fieldErrors).forEach(([field, errors]: [string, any]) => {
+          Object.entries(issues.fieldErrors).forEach(([field, errors]) => {
             issuesText += `- ${field}: ${Array.isArray(errors) ? errors.join(", ") : errors}\n`;
           });
         }
@@ -422,8 +422,8 @@ export default function Ventas() {
       setCondicionesGarantia("");
       
       await loadData();
-    } catch (error: any) {
-      setErr(error.response?.data?.error || "Error al crear la garantía");
+    } catch (error: unknown) {
+      setErr(getApiErrorMessage(error, "Error al crear la garantía"));
     } finally {
       setLoading(false);
     }

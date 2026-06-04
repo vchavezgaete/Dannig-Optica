@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api } from "../api";
+import { getApiErrorData, getApiErrorMessage } from "../utils/apiError";
 
 type Operativo = {
   idOperativo: number;
@@ -9,6 +10,13 @@ type Operativo = {
   cupos: number | null;
   citasAgendadas?: number;
   cuposDisponibles?: number | null;
+};
+
+type OperativoPayload = {
+  nombre: string;
+  fecha: string;
+  lugar: string | null;
+  cupos: number | null;
 };
 
 export default function Operativos() {
@@ -42,8 +50,8 @@ export default function Operativos() {
     try {
       const { data } = await api.get<Operativo[]>("/operativos");
       setOperativos(data);
-    } catch (e: any) {
-      setError(e.response?.data?.error || "Error al cargar operativos");
+    } catch (e: unknown) {
+      setError(getApiErrorMessage(e, "Error al cargar operativos"));
     } finally {
       setLoading(false);
     }
@@ -71,7 +79,7 @@ export default function Operativos() {
     setError(null);
     setMsg(null);
 
-    const payload: any = {
+    const payload: OperativoPayload = {
       nombre: form.nombre,
       fecha: new Date(form.fecha).toISOString(),
       lugar: form.lugar || null,
@@ -88,8 +96,8 @@ export default function Operativos() {
       }
       resetForm();
       await loadOperativos();
-    } catch (e: any) {
-      setError(e.response?.data?.error || "Error al guardar operativo");
+    } catch (e: unknown) {
+      setError(getApiErrorMessage(e, "Error al guardar operativo"));
     }
   }
 
@@ -100,10 +108,11 @@ export default function Operativos() {
       await api.delete(`/operativos/${id}`);
       setMsg("Operativo eliminado exitosamente");
       await loadOperativos();
-    } catch (e: any) {
-      setError(e.response?.data?.error || "Error al eliminar operativo");
-      if (e.response?.data?.citasAsociadas) {
-        setError(`No se puede eliminar: tiene ${e.response.data.citasAsociadas} citas asociadas`);
+    } catch (e: unknown) {
+      const data = getApiErrorData(e);
+      setError(getApiErrorMessage(e, "Error al eliminar operativo"));
+      if (typeof data?.citasAsociadas === "number") {
+        setError(`No se puede eliminar: tiene ${data.citasAsociadas} citas asociadas`);
       }
     }
   }
@@ -253,7 +262,7 @@ export default function Operativos() {
                       {op.citasAgendadas || 0}
                     </td>
                     <td style={{ textAlign: "center" }}>
-                      {op.cuposDisponibles !== null ? (
+                      {op.cuposDisponibles != null ? (
                         <span
                           style={{
                             color:

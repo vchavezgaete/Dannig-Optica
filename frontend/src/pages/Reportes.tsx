@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api } from "../api";
 import HorasAgendadasTable from "../components/HorasAgendadasTable";
+import type { CitaAgendada } from "../components/HorasAgendadasTable";
 import { exportarReportePDF, exportarReporteExcel } from "../utils/exportarReportes";
 import {
   BarChart,
@@ -14,6 +15,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  type PieLabelRenderProps,
 } from "recharts";
 
 type TipoReporte = 
@@ -73,7 +75,7 @@ type ReporteData = {
   fechaHasta: string | null;
   total?: number;
   estadisticas?: Record<string, unknown>;
-  datos: VendedorData[] | ProductoData[] | VentaData[] | ClienteData[];
+  datos: VendedorData[] | ProductoData[] | VentaData[] | ClienteData[] | CitaAgendada[];
 };
 
 export default function Reportes() {
@@ -123,7 +125,7 @@ export default function Reportes() {
       case "top-clientes":
         return <TopClientesTable datos={reporteData.datos as ClienteData[]} />;
       case "horas-agendadas":
-        return <HorasAgendadasTable datos={reporteData.datos as unknown[]} estadisticas={reporteData.estadisticas} />;
+        return <HorasAgendadasTable datos={reporteData.datos as CitaAgendada[]} estadisticas={reporteData.estadisticas} />;
       default:
         return <div>Tipo de reporte no reconocido</div>;
     }
@@ -389,13 +391,13 @@ function ProductosMasVendidosTable({ datos }: { datos: ProductoData[] }) {
                 cx="50%"
                 cy="45%"
                 labelLine={true}
-                label={(entry: Record<string, unknown>) => `${((entry.percent as number) * 100).toFixed(1)}%`}
+                label={({ percent }: PieLabelRenderProps) => `${(Number(percent ?? 0) * 100).toFixed(1)}%`}
                 outerRadius={100}
                 fill="#8884d8"
                 dataKey="value"
                 nameKey="name"
               >
-                {chartData.map((entry, index) => (
+                {chartData.map((_entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>

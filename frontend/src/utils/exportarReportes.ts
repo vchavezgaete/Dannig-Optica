@@ -8,7 +8,7 @@ type ReporteData = {
   fechaHasta?: string | null;
   total?: number;
   estadisticas?: Record<string, unknown>;
-  datos: any[];
+  datos: Record<string, unknown>[];
 };
 
 /**
@@ -18,7 +18,7 @@ export function exportarReportePDF(reporteData: ReporteData): void {
   const fechaHoy = new Date().toLocaleDateString("es-CL");
   
   // Build HTML content for PDF
-  let htmlContent = `
+  const htmlContent = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -221,7 +221,12 @@ function generarTablaHTML(reporteData: ReporteData): string {
         value = JSON.stringify(value);
       }
       // Format numbers
-      if (typeof value === "number" && header.toLowerCase().includes("total") || header.toLowerCase().includes("precio") || header.toLowerCase().includes("monto")) {
+      if (
+        typeof value === "number" &&
+        (header.toLowerCase().includes("total") ||
+          header.toLowerCase().includes("precio") ||
+          header.toLowerCase().includes("monto"))
+      ) {
         value = `$${value.toLocaleString("es-CL")}`;
       }
       html += `<td>${value}</td>`;

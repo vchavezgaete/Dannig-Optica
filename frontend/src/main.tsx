@@ -7,6 +7,7 @@ import MultiRoleProtectedRoute from "./MultiRoleProtectedRoute";
 import Layout from "./Layout";
 import AuthProvider from "./auth/AuthProvider"; 
 import ErrorBoundary from "./components/ErrorBoundary";
+import LoadingFallback from "./components/LoadingFallback";
 import "./index.css";
 
 // Lazy load pages for better initial bundle size
@@ -22,17 +23,6 @@ const Productos = lazy(() => import("./pages/Productos"));
 const Alertas = lazy(() => import("./pages/Alertas"));
 const Operativos = lazy(() => import("./pages/Operativos"));
 const Usuarios = lazy(() => import("./pages/Usuarios"));
-
-// Loading component for Suspense fallback
-const LoadingFallback = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gray-50">
-    <div className="text-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-      <p className="text-gray-600">Cargando...</p>
-    </div>
-  </div>
-);
-
 
 const router = createBrowserRouter([
   { 
